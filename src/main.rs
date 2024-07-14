@@ -1,7 +1,6 @@
 use rand::Rng;
-use std::{fmt::Pointer, fs};
-use serde_json::json;
-use std::io::{BufRead, BufReader, Result};
+use std::{fs};
+
 
 
 fn handle_weapon(mut text: String) -> String { //weapon system
@@ -21,14 +20,16 @@ fn handle_weapon(mut text: String) -> String { //weapon system
 }
 
 fn handle_music(mut text: String) -> String { //selects a level song
-    let category: u64 = rand::thread_rng().gen_range(0..13);
+    let category: u64 = rand::thread_rng().gen_range(0..10);
     loop {
-        let category: u64 = rand::thread_rng().gen_range(0..13);
-        if category == 11 {
-
+        
+        if category == 11 || category == 12{
+            let category: u64 = rand::thread_rng().gen_range(0..10);
             continue;
         }
         else {
+            let song: u64 = rand::thread_rng().gen_range(0..7);
+            text = format!("{}1l=\"{}\"\n1m=\"{}\"",text,category,song);
             break;
 
         }
@@ -36,8 +37,7 @@ fn handle_music(mut text: String) -> String { //selects a level song
     }
     
     
-    let song: u64 = rand::thread_rng().gen_range(0..7);
-    text = format!("{}1l=\"{}\"\n1m=\"{}\"",text,category,song);
+    
     text
 }
 
@@ -53,7 +53,7 @@ fn handle_tiling(mut text: String, level_length: i64, verttiles: Vec<i64>) -> (S
         
             
             if pointchecker < verttiles.len() {
-                if i-1 == verttiles[pointchecker]/16 {
+                if i-1 == verttiles[pointchecker]/16 && i * 256 != level_length {
                     for j in 1..height {
                         
                         vecheight.push(height); 
@@ -77,7 +77,7 @@ fn handle_tiling(mut text: String, level_length: i64, verttiles: Vec<i64>) -> (S
             can_proceed = true;
         } else {
             loop {
-                let temp_height = rand::thread_rng().gen_range(1..13);
+                let temp_height =  rand::thread_rng().gen_range(1..13);
                 if temp_height > vecheight[vecheighttrack - 1] + 3 || temp_height > 12 {
                         continue;
                     } else {
@@ -89,14 +89,17 @@ fn handle_tiling(mut text: String, level_length: i64, verttiles: Vec<i64>) -> (S
             }
     
             if can_proceed {
+                
                 for j in 1..height {
                     vecheight.push(height); 
                     vecheighttrack += 1;
+                
                     text = format!(
                         "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
                         text, i * 16, (screeny)+224 - j * 16, i * 16, (screeny)+224 - j * 16, tile_id,
                         i * 16, (screeny)+224 - j * 16, i * 16, (screeny)+224 - j * 16, i * 16, (screeny)+224 - j * 16
                     );
+                    
                 }
             }
         }
@@ -119,7 +122,6 @@ fn handle_megaman(mut text: String, levelheights: Vec<i64>) -> (String,i64,i64) 
 
 
 fn handle_objs(mut text: String, levelheights: Vec<i64>, lvllength: i64, megax: i64, megay: i64, verttiles: Vec<i64>) -> String {
-    
     let count = rand::thread_rng().gen_range(0..lvllength / 32);
     let objectids = vec![
         rand::thread_rng().gen_range(0..237),
@@ -134,41 +136,43 @@ fn handle_objs(mut text: String, levelheights: Vec<i64>, lvllength: i64, megax: 
     println!("{}", l);
 
     for _ in 0..count {
-        let mut pointchecker: usize = 0;
         let mut xpos = rand::thread_rng().gen_range(1..=(l / 16));
         xpos = ((xpos + 7) / 16) * 16;
-        let mut ypos = 224 + screeny - ((levelheights[xpos] * 16) as i64);
         
         if xpos >= l {
             continue;
-        } else {
-            for &tile in &verttiles {
-                if let Some(tile_val) = verttiles.get(tile as usize) {
-                    if xpos > *tile_val as usize {
-                        screeny += 224;
-                        println!("kromer{}", xpos);
-                        ypos = 224 + screeny - ((levelheights[xpos] * 16) as i64);
-                    }
-                }
-            }
-            if xpos as i64 != megax && ypos != megay {
-                
+        }
 
-                text = format!(
-                    "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"5\"\ne{},{}=\"{}\"\n",
-                    text, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, objectids[rand::thread_rng().gen_range(0..4)]
-                );
-                text = format!(
-                    "{}f{},{}=\"0\"\ng{},{}=\"0\"\nh{},{}=\"1\"\ni{},{}=\"0\"\n",
-                    text, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos
-                );
-                println!("x is {}. y is {}.", xpos, ypos);
+        // Reset screeny for each xpos
+        screeny = 0;
+        for &tile in &verttiles {
+            let tile_usize = tile as usize;
+            
+            if xpos*16 > tile_usize {
+                screeny += 224;
+                
             }
+        }
+
+        let mut ypos = 224 - ((levelheights[xpos] * 16) as i64);
+        ypos += screeny;
+        if xpos as i64 != megax && ypos != megay {
+            text = format!(
+                "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"5\"\ne{},{}=\"{}\"\n",
+                text, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, objectids[rand::thread_rng().gen_range(0..4)]
+            );
+            text = format!(
+                "{}f{},{}=\"0\"\ng{},{}=\"0\"\nh{},{}=\"1\"\ni{},{}=\"0\"\n",
+                text, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos
+            );
+            println!("x is {}. y is {}.", xpos, ypos);
         }
     }
 
     text
 }
+
+
 
 
 
@@ -204,7 +208,7 @@ fn handle_boss(mut text: String, bossid: u64, _levelheights: Vec<i64>,length: i6
     let mut pointchecker = 0;
     
     let l: usize = length.try_into().unwrap(); 
-    let xpos = (l - 256) + (rand::thread_rng().gen_range(0..16)) * 16 as usize;
+    let xpos = (l - 256) + (rand::thread_rng().gen_range(7..16)) * 16 as usize;
 
     let ypos = 224-(rand::thread_rng().gen_range(7..10))*16;
     
@@ -249,10 +253,20 @@ fn handle_boss(mut text: String, bossid: u64, _levelheights: Vec<i64>,length: i6
 }
 
 fn main() {
-    //let length: i64 = rand::thread_rng().gen_range(1..50)*256;
-    let length = 1024;
+    let bgcount = rand::thread_rng().gen_range(0..732);
+    let length: i64 = rand::thread_rng().gen_range(1..50)*256;
     //screen trans
-    let transpoints = vec![256,512,768];
+    let mut transpoints = Vec::new();
+    for c in 0..length/256 {
+        let transchances = rand::thread_rng().gen_range(0..4);
+        let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
+        if transition == true && c * 256 != length-256{
+            
+            transpoints.push(c*256);
+           
+            
+        }
+    }
     let mut pointchecker = 0;
     let mut screeny = 0;
 
@@ -280,19 +294,36 @@ fn main() {
     let binding = handle_abilities(contents.clone());
     contents = binding;
 
-    //activate sections
+    //activate sections and add backgrounds
     for i in -1..length/256 {
         
         if pointchecker < transpoints.len() {
             if i-1 == transpoints[pointchecker]/256 {
-                screeny+=224;
-                pointchecker+=1;
-                contents = format!("{}2a{},{}=\"1\"\n",contents,(i-1)*256,screeny);
-                println!("{screeny}");
+                if i != -1 {
+                    screeny+=224;
+                    pointchecker+=1;
+                    contents = format!("{}2a{},{}=\"1\"\n",contents,(i-1)*256,screeny);
+                    //add bg
+                    
+                    contents = format!("{}2d{},{}=\"{}\"\n",contents,(i-1)*256,screeny,bgcount);
+                    println!("{screeny}");
+                }
+                else {
+                    screeny+=224;
+                    pointchecker+=1;
+                    contents = format!("{}2a{},{}=\"1\"\n",contents,(i)*256,screeny);
+                    //add bg
+                    
+                    contents = format!("{}2d{},{}=\"{}\"\n",contents,i*256,screeny,bgcount);
+                    println!("{screeny}");
+
+                }
             }
         }
         if i != -1 {
             contents = format!("{}2a{},{}=\"1\"\n",contents,i*256,screeny);
+            //add bg
+            contents = format!("{}2d{},{}=\"{}\"\n",contents,i*256,screeny,bgcount);
             println!("section at {},{} activated.",i*256,screeny);
         }
     }
@@ -313,7 +344,7 @@ fn main() {
     let mut bossid;
     loop {
         bossid = rand::thread_rng().gen_range(1..68);
-        if bossid != 33 && bossid != 0 && bossid != 34 && bossid != 1 && bossid != 55 && bossid != 56 && bossid != 19 &&  bossid != 57 && bossid != 68 && bossid != 36 && bossid != 59 && bossid != 60 { //disables boss suppressor, boss doors, and kamegoro generators as they softlock the player and arent bosses anyways. also disables boobeam trap and gemini man to prevent crashes
+        if bossid != 33 && bossid != 0 && bossid != 34 && bossid != 1 && bossid != 55 && bossid != 56 && bossid != 9 &&  bossid != 57 && bossid != 68 && bossid != 36 && bossid != 59 && bossid != 60 { //disables boss suppressor, boss doors, and kamegoro generators as they softlock the player and arent bosses anyways. also disables boobeam trap and gemini man to prevent crashes
             break;
 
         }
@@ -327,6 +358,6 @@ fn main() {
 
 
     fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv"); //write all data to the mmlv file.
-
+    
     
 }
