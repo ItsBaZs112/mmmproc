@@ -3,28 +3,111 @@
 pub mod tradhandle {
     use rand::Rng;
     use std::fs;
+    #[derive(Debug)]
+struct TileData {
+    enabled: bool,
+    xpos: i32,
+    ypos: i32,
+    offset_x: Option<String>,
+    offset_y: Option<String>,
+    tile_id: Option<String>,
+    tile: bool,
+    extra_e: Option<String>,
+}
 
+fn data_extract(filename: &str) -> Vec<TileData> {
+    let data = fs::read_to_string(filename).expect(format!("failed to read file {}",filename).as_str());
+    let mut tiles = Vec::new();
 
-    fn data_extract(filename: &str) -> (Vec<i64>, Vec<i64>) {
-        let data = fs::read_to_string(filename).expect("???");
-        let mut tiles = Vec::new();
-        let mut enemies = Vec::new();
+    let mut rh = 0;
+    let mut rw = 0;
+
+    for line in data.lines() {
+        let parts: Vec<&str> = line.split('=').collect();
+        let key = parts[0].trim();
+        let value = parts[1].trim().trim_matches('"');
         
-        for line in data.lines() {
-            if line.starts_with("a") {
+        if let Ok(antival) = value.parse::<i32>() {
+            if key == "1p" {
+                rw = antival / 16;
+            } else if key == "1r" {
+                rh = antival / 16;
+            }
+        } else {
+            println!("failed to get data");
+        }
+    }
+
+    println!("rw: {}, rh: {}", rw, rh);
+
+
+    for y in 0..rh {
+        for x in 0..rw {
+            let mut current_tile = TileData {
+                enabled: false,
+                xpos: x*16,
+                ypos: y*16,
+                offset_x: None,
+                offset_y: None,
+                tile_id: None,
+                tile: false,
+                extra_e: None,
+            };
+            
+            for line in data.lines() {
                 let parts: Vec<&str> = line.split('=').collect();
-                tiles.push(parts[1].parse().unwrap_or_default());
-            } else if line.starts_with("b") {
-                let parts: Vec<&str> = line.split('=').collect();
-                enemies.push(parts[1].parse().unwrap_or_default());
+                if parts.len() == 2 {
+                    let key = parts[0].trim();
+                    let value = parts[1].trim().to_string();
+                    
+                    match key.chars().next() {
+                        Some('a') => {
+
+                            if value.contains("1") == true {
+                                current_tile.enabled = true;
+
+                            }
+                            else {
+                                current_tile.enabled = false;
+                            }
+                        },
+                        Some('k') => current_tile.offset_x = Some(value),
+                        Some('j') => current_tile.offset_y = Some(value),
+                        Some('i') => current_tile.tile = true,
+                        Some('e') => current_tile.extra_e = Some(value),
+                        Some('d') => current_tile.tile_id = Some(value),
+                        _ => {},
+                    }
+                    
+                    if current_tile.enabled && current_tile.tile_id.is_some() {
+                        tiles.push(current_tile);
+                        current_tile = TileData {
+                            enabled: false,
+                            xpos:x*16,
+                            ypos:y*16,
+                            offset_x: None,
+                            offset_y: None,
+                            tile_id: None,
+                            tile: false,
+                            extra_e: None,
+                        };
+                    }
+                }
+            }
+            if current_tile.enabled || current_tile.tile_id.is_some() {
+                tiles.push(current_tile);
+                for i in 0..tiles.len() {
+                    
+                        println!("enabled: {:?} x: {:?}. y: {:?}. tile id: {:?}",tiles[i].enabled,tiles[i].xpos,tiles[i].ypos,tiles[i].tile_id);
+                    
+                }
             }
         }
-        for i in 0..tiles.len() {
-            println!("{}",tiles[i]);
-        }
-        (tiles, enemies)
     }
+    tiles
     
+}
+
 
     fn handle_weapon(mut text: String) -> String { //weapon system
         //will force a weapon onto slot zero because 90% of the levels i generated didnt have the player have a default wpn
@@ -377,8 +460,8 @@ pub mod tradhandle {
 
 
         fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv"); //write all data to the mmlv file.
-        
         data_extract("metal.mmlv");
+        
     }
 
 }
