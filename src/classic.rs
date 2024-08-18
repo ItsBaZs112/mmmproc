@@ -4,8 +4,6 @@ pub mod handle {
     use rand::Rng;
     use std::fs;
 
-
-
     fn handle_weapon(mut text: String) -> String { //weapon system
         //will force a weapon onto slot zero because 90% of the levels i generated didnt have the player have a default wpn
         let dfwpn_rng: u64 = rand::thread_rng().gen_range(0..105);
