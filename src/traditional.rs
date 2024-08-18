@@ -1,13 +1,13 @@
 
 
 pub mod tradhandle {
-    use rand::{Error, Rng};
+    use rand::Rng;
     use std::fs;
-        #[derive(Debug)]
+    #[derive(Debug,Clone)]
     struct TileData {
         enabled: bool,
-        xpos: i32,
-        ypos: i32,
+        xpos: i64,
+        ypos: i64,
         offset_x: Option<String>,
         offset_y: Option<String>,
         tile_id: Option<String>,
@@ -16,124 +16,87 @@ pub mod tradhandle {
     }
 
     fn data_extract(filename: &str) -> Vec<TileData> {
-        let data = fs::read_to_string(filename).expect(format!("failed to read file {}",filename).as_str());
+        let data = fs::read_to_string(filename)
+            .expect(&format!("Failed to read file {}", filename));
+        
         let mut tiles = Vec::new();
-        let mut can_proceed: i16 = 0; //0: no values taken. 1: 1 value gotten. 2: both width and height collected, can now grab tiledata
-        let mut rh = 0;
-        let mut rw = 0;
-        
+        let mut rew = 256/16;
+        let mut reh = (1*224)/16;
+        let mut writestring = String::from("");
 
-        for l in data.lines() {
-            let parts: Vec<&str> = l.split('=').collect();
-            if parts.len() > 1 {
-                
-                let key = parts[0].trim();
-                let value = parts[1].trim().trim_matches('"');
-                if key == "1q" || key == "1s" {
-                    println!("{key},{value}");
-                    match key {
-                        "1q" => {
-                            let mut rh: i64 = value.parse().unwrap();
-                            print!("rh");
-                            rh /= 16;
-                            can_proceed+=1;
-                        }
-                        "1s" => {
-                            let mut rw: i64 = value.parse().unwrap();
-                            rw /= 16;
-                            can_proceed+=1;
-                        }
-                        _ => {}
-                    }
-                }
-                if let Ok(antival) = value.parse::<i32>() {
-                    if key.to_string() == "1q" {
-                        rw = antival / 16;
-                        println!("{}",rw);
-                        println!("rw: {}, rh: {}", rw, rh);
-                    } else if key.to_string() == "1s" {
-                        rh = antival / 16;
-                        println!("{}",rh);
-                        println!("rw: {}, rh: {}", rw, rh);
-                    }
-                }
-            }
-            else {
-                continue;
-
-            }
-        }
-        
-
-        if can_proceed > 1{
-            for y in 0..rh {
-                for x in 0..rw {
+            for y in 0..reh {
+                let buffer = format!("{}\n",writestring.clone());
+                writestring = buffer;
+                for x in 0..rew {
                     let mut current_tile = TileData {
                         enabled: false,
-                        xpos: x*16,
-                        ypos: y*16,
+                        xpos: x * 16,
+                        ypos: y * 16,
                         offset_x: None,
                         offset_y: None,
                         tile_id: None,
                         tile: false,
                         extra_e: None,
                     };
-                    
+
                     for line in data.lines() {
                         let parts: Vec<&str> = line.split('=').collect();
-                        if parts.len() == 2 {
-                            let key = parts[0].trim();
-                            let value = parts[1].trim().to_string();
-                            
-                            match key.chars().next() {
-                                Some('a') => {
+                        if parts.len() != 2 {
+                            continue;
+                        }
 
-                                    if value.contains("1") == true {
-                                        current_tile.enabled = true;
+                        let key = parts[0].trim();
+                        let value = parts[1].trim().to_string();
 
-                                    }
-                                    else {
-                                        current_tile.enabled = false;
-                                    }
-                                },
-                                Some('k') => current_tile.offset_x = Some(value),
-                                Some('j') => current_tile.offset_y = Some(value),
-                                Some('i') => current_tile.tile = true,
-                                Some('e') => current_tile.extra_e = Some(value),
-                                Some('d') => current_tile.tile_id = Some(value),
-                                _ => {},
-                            }
-                            
-                            if current_tile.enabled && current_tile.tile_id.is_some() {
-                                tiles.push(current_tile);
-                                current_tile = TileData {
-                                    enabled: false,
-                                    xpos:x*16,
-                                    ypos:y*16,
-                                    offset_x: None,
-                                    offset_y: None,
-                                    tile_id: None,
-                                    tile: false,
-                                    extra_e: None,
-                                };
-                            }
+                        match key.chars().next() {
+                            Some('a') => {
+                               
+                            },
+                            Some('k') => current_tile.offset_x = Some(value),
+                            Some('j') => current_tile.offset_y = Some(value),
+                            Some('i') => {
+                                current_tile.tile = value.contains("1");
+                                if current_tile.tile == true {
+
+                                    let buffer = format!("{}1",writestring.clone());
+                                    writestring = buffer;
+                                }
+                                else {
+                                    let buffer = format!("{}0",writestring.clone());
+                                    writestring = buffer;
+                                }
+                            },
+                            Some('e') => current_tile.extra_e = Some(value),
+                            Some('d') => current_tile.tile_id = Some(value),
+                            _ => {
+                                writestring = format!("{}0",writestring);
+                                
+                            },
+                        }
+
+                        if current_tile.enabled && current_tile.tile_id.is_some() {
+                            tiles.push(current_tile.clone());
                         }
                     }
+
                     if current_tile.enabled || current_tile.tile_id.is_some() {
                         tiles.push(current_tile);
-                        for i in 0..tiles.len() {
-                            
-                                println!("enabled: {:?} x: {:?}. y: {:?}. tile id: {:?}",tiles[i].enabled,tiles[i].xpos,tiles[i].ypos,tiles[i].tile_id);
-                            
-                        }
                     }
                 }
-            }
             
         }
+
+        for i in 0..tiles.len() {
+            println!(
+                "enabled: {:?}, x: {:?}, y: {:?}, tile_id: {:?}",
+                tiles[i].enabled, tiles[i].xpos, tiles[i].ypos, tiles[i].tile_id
+            );
+        }
+        println!("{}",writestring);
+        fs::write("guide.lvg", writestring.clone()).expect("failed to write guide"); //write all data to the mmlv file.
         tiles
-        
     }
+
 
 
     fn handle_weapon(mut text: String) -> String { //weapon system
