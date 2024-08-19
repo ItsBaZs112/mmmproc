@@ -6,8 +6,8 @@ pub mod tradhandle {
     #[derive(Debug,Clone)]
     struct TileData {
         enabled: bool,
-        xpos: i64,
-        ypos: i64,
+        xpos: f64,
+        ypos: f64,
         offset_x: Option<String>,
         offset_y: Option<String>,
         tile_id: Option<String>,
@@ -20,83 +20,120 @@ pub mod tradhandle {
             .expect(&format!("Failed to read file {}", filename));
         
         let mut tiles = Vec::new();
-        let mut rew = 256/16;
-        let mut reh = (1*224)/16;
+        let mut rew: f64 = 0.0;
+        let mut reh: f64 = 0.0;
         let mut writestring = String::from("");
-
-            for y in 0..reh {
-                let buffer = format!("{}\n",writestring.clone());
-                writestring = buffer;
-                for x in 0..rew {
-                    let mut current_tile = TileData {
-                        enabled: false,
-                        xpos: x * 16,
-                        ypos: y * 16,
-                        offset_x: None,
-                        offset_y: None,
-                        tile_id: None,
-                        tile: false,
-                        extra_e: None,
-                    };
-
-                    for line in data.lines() {
-                        let parts: Vec<&str> = line.split('=').collect();
-                        if parts.len() != 2 {
-                            continue;
-                        }
-
-                        let key = parts[0].trim();
-                        let value = parts[1].trim().to_string();
-
-                        match key.chars().next() {
-                            Some('a') => {
-                               
-                            },
-                            Some('k') => current_tile.offset_x = Some(value),
-                            Some('j') => current_tile.offset_y = Some(value),
-                            Some('i') => {
-                                current_tile.tile = value.contains("1");
-                                if current_tile.tile == true {
-
-                                    let buffer = format!("{}1",writestring.clone());
-                                    writestring = buffer;
-                                }
-                                else {
-                                    let buffer = format!("{}0",writestring.clone());
-                                    writestring = buffer;
-                                }
-                            },
-                            Some('e') => current_tile.extra_e = Some(value),
-                            Some('d') => current_tile.tile_id = Some(value),
-                            _ => {
-                                writestring = format!("{}0",writestring);
-                                
-                            },
-                        }
-
-                        if current_tile.enabled && current_tile.tile_id.is_some() {
-                            tiles.push(current_tile.clone());
-                        }
+        let mut sy: f64 = 0.0;
+        let mut sx: f64 = 0.0;
+        let mut is_tile = false;
+        
+        for line in data.lines() {
+            let parts: Vec<&str> = line.split('=').collect();
+            if parts.len() != 2 {
+                continue;
+            }
+    
+            let key = parts[0].trim();
+            let value = parts[1].trim().to_string();
+    
+            match key {
+                "1p" => {
+                    let clean = value.trim_matches('"');
+                    sx = clean.parse().unwrap_or(0.0);
+                },
+                "1q" => {
+                    let clean = value.trim_matches('"');
+                    rew = clean.parse().expect("Failed to parse rew");
+                    println!("The number is: {}", rew);
+                },
+                "1r" => {
+                    let clean = value.trim_matches('"');
+                    sy = clean.parse().unwrap_or(0.0);
+                },
+                "1s" => {
+                    let clean = value.trim_matches('"');
+                    reh = clean.parse().unwrap_or(224.0);
+                },
+                _ => {},
+            }
+            if rew != 0.0 && reh != 0.0 {
+                println!("startw: {} endw: {}", sx, rew);
+                println!("starth: {} endh: {}", sy, reh);
+                break;
+            }
+        }
+        
+        // Iterate over the range with a step
+        let step = 16.0; // Define the step size
+        for y in (sy as usize / 224..((sy + reh) as usize / 224)).map(|y| y as f64) {
+            writestring = format!("{}\n POSITION {}",writestring,y);
+            for x in (sx as usize / 16..((sx + rew) as usize / 16)).map(|x| x as f64) {
+                let mut current_tile = TileData {
+                    enabled: false,
+                    xpos: x * 16.0,
+                    ypos: y * 16.0,
+                    offset_x: None,
+                    offset_y: None,
+                    tile_id: None,
+                    tile: false,
+                    extra_e: None,
+                };
+    
+                for line in data.lines() {
+                    let parts: Vec<&str> = line.split('=').collect();
+                    if parts.len() != 2 {
+                        continue;
                     }
-
-                    if current_tile.enabled || current_tile.tile_id.is_some() {
-                        tiles.push(current_tile);
+    
+                    let key = parts[0].trim();
+                    let value = parts[1].trim().to_string();
+    
+                    match key.chars().next() {
+                        Some('a') => {
+                           
+                        },
+                        Some('k') => current_tile.offset_x = Some(value),
+                        Some('j') => current_tile.offset_y = Some(value),
+                        Some('i') => {
+                            current_tile.tile = value.contains("1");
+                            if current_tile.tile {
+                                writestring.push('▣');
+                            } else {
+                                writestring.push('_');
+                            }
+                            is_tile = true;
+                        },
+                        Some('e') => current_tile.extra_e = Some(value),
+                        Some('d') => current_tile.tile_id = Some(value),
+                        _ => {
+                            writestring.push('_');
+                        },
+                    }
+    
+                    if current_tile.enabled && current_tile.tile_id.is_some() && is_tile {
+                        tiles.push(current_tile.clone());
+                    } else {
+                        writestring.push('_');
                     }
                 }
+    
+                if current_tile.enabled || current_tile.tile_id.is_some() {
+                    tiles.push(current_tile);
+                }
+            }
             
         }
-
+    
         for i in 0..tiles.len() {
             println!(
                 "enabled: {:?}, x: {:?}, y: {:?}, tile_id: {:?}",
                 tiles[i].enabled, tiles[i].xpos, tiles[i].ypos, tiles[i].tile_id
             );
         }
-        println!("{}",writestring);
-        fs::write("guide.lvg", writestring.clone()).expect("failed to write guide"); //write all data to the mmlv file.
+    
+        fs::write("guide.lvg", writestring.clone()).expect("failed to write guide"); // write all data to the mmlv file.
         tiles
     }
-
 
 
     fn handle_weapon(mut text: String) -> String { //weapon system
@@ -202,72 +239,6 @@ pub mod tradhandle {
         
             (text, vecheight)  
         }
-        
-
-    fn handle_megaman(mut text: String, levelheights: Vec<i64>) -> (String,i64,i64) {
-        let xpos = (rand::thread_rng().gen_range(1..7) * 16) as usize;
-        let ypos = 224-(((levelheights[xpos/16]))*16)-16;
-        let playerid = rand::thread_rng().gen_range(0..4);
-        println!("x and y is {},{}. player id is {}.", xpos,ypos,playerid);
-
-        text = format!("{}a{},{}=\"1\"\nb{},{}=\"-1\"\nc{},{}=\"1\"\nd{},{}=\"4\"\ne{},{}=\"{}\"\n",text,xpos,ypos,xpos,ypos,xpos,ypos,xpos,ypos,xpos,ypos,playerid); //basic stuffs
-        text = format!("{}f{},{}=\"0\"\ng{},{}=\"0\"\nh{},{}=\"1\"\ni{},{}=\"0\"\n",text,xpos,ypos,xpos,ypos,xpos,ypos,xpos,ypos); //other properties
-
-        (text,xpos.try_into().unwrap(),ypos)
-    }
-
-
-    fn handle_objs(mut text: String, levelheights: Vec<i64>, lvllength: i64, megax: i64, megay: i64, verttiles: Vec<i64>) -> String {
-        let count = rand::thread_rng().gen_range(0..lvllength / 32);
-        let objectids = vec![
-            rand::thread_rng().gen_range(0..237),
-            rand::thread_rng().gen_range(0..237),
-            rand::thread_rng().gen_range(0..237),
-            rand::thread_rng().gen_range(0..237),
-            rand::thread_rng().gen_range(0..237),
-        ];
-        #[allow(unused_assignments)]
-        let mut screeny = 0;
-        println!("enemy count: {}", count);
-        let l: usize = lvllength.try_into().unwrap();
-        println!("{}", l);
-
-        for _ in 0..count {
-            let mut xpos = rand::thread_rng().gen_range(1..=(l / 16));
-            xpos = ((xpos + 7) / 16) * 16;
-            
-            if xpos >= l {
-                continue;
-            }
-
-            // reset screeny for each xpos
-            screeny = 0;
-            for &tile in &verttiles {
-                let tile_usize = tile as usize;
-                
-                if xpos*16 > tile_usize {
-                    screeny += 224;
-                    
-                }
-            }
-
-            let mut ypos = 224 - ((levelheights[xpos] * 16) as i64);
-            ypos += screeny;
-            if xpos as i64 != megax && ypos != megay {
-                text = format!(
-                    "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"5\"\ne{},{}=\"{}\"\n",
-                    text, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, objectids[rand::thread_rng().gen_range(0..4)]
-                );
-                text = format!(
-                    "{}f{},{}=\"0\"\ng{},{}=\"0\"\nh{},{}=\"1\"\ni{},{}=\"0\"\n",
-                    text, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos, xpos * 16, ypos
-                );
-                println!("x is {}. y is {}.", xpos, ypos);
-            }
-        }
-
-        text
-    }
 
     fn handle_abilities(mut text: String) -> String { //changes default level abilities
         let can_charge; //can megaman charge buster?
@@ -294,56 +265,6 @@ pub mod tradhandle {
         
         text
     }
-
-    fn handle_boss(mut text: String, bossid: u64, _levelheights: Vec<i64>,length: i64, transpoints: Vec<i64>) -> String {
-        let mut screeny = 0;
-        let mut pointchecker = 0;
-        
-        let l: usize = length.try_into().unwrap(); 
-        let xpos = (l - 256) + (rand::thread_rng().gen_range(7..16)) * 16 as usize;
-
-        let ypos = 224-(rand::thread_rng().gen_range(7..10))*16;
-        
-        for i in -1..length/256 {
-            
-            if pointchecker < transpoints.len() {
-                if i-1 == transpoints[pointchecker]/256 {
-                    screeny+=224;
-                    pointchecker+=1;
-                    println!("{screeny}");
-                }
-            }
-        }
-
-        /* 
-        BOSS INI CODE:
-        o16,16="9999.000"
-        e16,16="2.000"
-        d16,16="8.000"
-        b16,16="-1.000"
-        a16,16="1.000"
-
-        1xcX - x pos
-        1ycX - y pos
-        1gaX - true
-        1gX - 1
-        1haX - false
-        1hX - 0
-        1iX - false
-        1jX - 0
-
-        1nX - boss msuic - set to 1 for mm2 boss theme
-        1oX - ost type, will be set to 0
-        */
-
-        
-        text = format!("{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\n",text,xpos,ypos+screeny,xpos,ypos+screeny,xpos,ypos+screeny,xpos,ypos+screeny,xpos,ypos+screeny,bossid); //basic stuffs
-        text = format!("{}1xc0=\"{}\"\n1yc0=\"{}\"\n1ga0=\"1\"\n1g0=\"1\"\n1ha0=\"0\"\n1h0=\"1\"\n1i0=\"0\"\n1j0=\"0\"\n1n0=\"1\"\n1o0=\"0\"\n",text,xpos,ypos+screeny);
-        
-        println!("boss category is 8. boss id is {}.", bossid);
-        text
-    }
-
     pub fn file_write() {
         let bgcount = rand::thread_rng().gen_range(0..732);
         let length: i64 = rand::thread_rng().gen_range(1..50)*256;
@@ -427,10 +348,10 @@ pub mod tradhandle {
         let objpoints = transpoints.clone();
 
         //oh and object placements
-        let binding = handle_megaman(contents.clone(),vecheights.clone());
-        contents = binding.0;
-        let binding = handle_objs(contents.clone(),vecheights.clone(),length,binding.1,binding.2,objpoints);
-        contents = binding;
+        //let binding = handle_megaman(contents.clone(),vecheights.clone());
+        //contents = binding.0;
+        //let binding = handle_objs(contents.clone(),vecheights.clone(),length,binding.1,binding.2,objpoints);
+        //contents = binding;
 
         //handle boss placement
         let mut bossid;
@@ -445,12 +366,12 @@ pub mod tradhandle {
 
             }
         }
-        let binding  = handle_boss(contents.clone(),bossid,vecheights.clone(),length.clone(),transpoints.clone());
-        contents = binding;
+        //let binding  = handle_boss(contents.clone(),bossid,vecheights.clone(),length.clone(),transpoints.clone());
+        //contents = binding;
 
 
         fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv"); //write all data to the mmlv file.
-        data_extract("metal.mmlv");
+        data_extract("frosty.mmlv");
         
     }
 
