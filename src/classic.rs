@@ -2,7 +2,10 @@
 
 pub mod handle {
     use rand::Rng;
+    use std::fs::File;
     use std::fs;
+    use std::io::{BufRead, BufReader, Result};
+    use std::collections::HashMap;
 
     fn handle_weapon(mut text: String) -> String { //weapon system
         //will force a weapon onto slot zero because 90% of the levels i generated didnt have the player have a default wpn
@@ -249,6 +252,7 @@ pub mod handle {
         text
     }
 
+    
     pub fn file_write() {
         let bgcount = rand::thread_rng().gen_range(0..732);
         let length: i64 = rand::thread_rng().gen_range(1..50)*256;
@@ -355,8 +359,7 @@ pub mod handle {
 
 
         fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv"); //write all data to the mmlv file.
-
         
-    }
+        }
 
 }

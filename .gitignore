@@ -1,3 +1,5 @@
 /target
-/level.mmlv
-/guide.lvg
+level.mmlv
+guide.lvg
+level.mmlv
+.gitignore
