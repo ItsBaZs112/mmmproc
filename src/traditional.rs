@@ -1,10 +1,10 @@
 
 
 pub mod tradhandle {
-    use rand::Rng;
+    use rand::{thread_rng, Rng};
     use std::fs;
     #[derive(Debug,Clone)]
-    struct TileData {
+    struct TileData { //this will be used for genrating realistic, megaman-like tile data, complete with an autotile system
         enabled: bool,
         xpos: f64,
         ypos: f64,
@@ -15,125 +15,6 @@ pub mod tradhandle {
         extra_e: Option<String>,
     }
 
-    fn data_extract(filename: &str) -> Vec<TileData> {
-        let data = fs::read_to_string(filename)
-            .expect(&format!("Failed to read file {}", filename));
-        
-        let mut tiles = Vec::new();
-        let mut rew: f64 = 0.0;
-        let mut reh: f64 = 0.0;
-        let mut writestring = String::from("");
-        let mut sy: f64 = 0.0;
-        let mut sx: f64 = 0.0;
-        let mut is_tile = false;
-        
-        for line in data.lines() {
-            let parts: Vec<&str> = line.split('=').collect();
-            if parts.len() != 2 {
-                continue;
-            }
-    
-            let key = parts[0].trim();
-            let value = parts[1].trim().to_string();
-    
-            match key {
-                "1p" => {
-                    let clean = value.trim_matches('"');
-                    sx = clean.parse().unwrap_or(0.0);
-                },
-                "1q" => {
-                    let clean = value.trim_matches('"');
-                    rew = clean.parse().expect("Failed to parse rew");
-                    println!("The number is: {}", rew);
-                },
-                "1r" => {
-                    let clean = value.trim_matches('"');
-                    sy = clean.parse().unwrap_or(0.0);
-                },
-                "1s" => {
-                    let clean = value.trim_matches('"');
-                    reh = clean.parse().unwrap_or(224.0);
-                },
-                _ => {},
-            }
-            if rew != 0.0 && reh != 0.0 {
-                println!("startw: {} endw: {}", sx, rew);
-                println!("starth: {} endh: {}", sy, reh);
-                break;
-            }
-        }
-        
-        // Iterate over the range with a step
-        let step = 16.0; // Define the step size
-        for y in (sy as usize / 224..((sy + reh) as usize / 224)).map(|y| y as f64) {
-            writestring = format!("{}\n POSITION {}",writestring,y);
-            for x in (sx as usize / 16..((sx + rew) as usize / 16)).map(|x| x as f64) {
-                let mut current_tile = TileData {
-                    enabled: false,
-                    xpos: x * 16.0,
-                    ypos: y * 16.0,
-                    offset_x: None,
-                    offset_y: None,
-                    tile_id: None,
-                    tile: false,
-                    extra_e: None,
-                };
-    
-                for line in data.lines() {
-                    let parts: Vec<&str> = line.split('=').collect();
-                    if parts.len() != 2 {
-                        continue;
-                    }
-    
-                    let key = parts[0].trim();
-                    let value = parts[1].trim().to_string();
-    
-                    match key.chars().next() {
-                        Some('a') => {
-                           
-                        },
-                        Some('k') => current_tile.offset_x = Some(value),
-                        Some('j') => current_tile.offset_y = Some(value),
-                        Some('i') => {
-                            current_tile.tile = value.contains("1");
-                            if current_tile.tile {
-                                writestring.push('▣');
-                            } else {
-                                writestring.push('_');
-                            }
-                            is_tile = true;
-                        },
-                        Some('e') => current_tile.extra_e = Some(value),
-                        Some('d') => current_tile.tile_id = Some(value),
-                        _ => {
-                            writestring.push('_');
-                        },
-                    }
-    
-                    if current_tile.enabled && current_tile.tile_id.is_some() && is_tile {
-                        tiles.push(current_tile.clone());
-                    } else {
-                        writestring.push('_');
-                    }
-                }
-    
-                if current_tile.enabled || current_tile.tile_id.is_some() {
-                    tiles.push(current_tile);
-                }
-            }
-            
-        }
-    
-        for i in 0..tiles.len() {
-            println!(
-                "enabled: {:?}, x: {:?}, y: {:?}, tile_id: {:?}",
-                tiles[i].enabled, tiles[i].xpos, tiles[i].ypos, tiles[i].tile_id
-            );
-        }
-    
-        fs::write("guide.lvg", writestring.clone()).expect("failed to write guide"); // write all data to the mmlv file.
-        tiles
-    }
 
 
     fn handle_weapon(mut text: String) -> String { //weapon system
@@ -284,12 +165,22 @@ pub mod tradhandle {
         let mut screeny = 0;
 
         //naming
+        let fortress = rand::thread_rng().gen_bool(1.0/4.0);
         let names = Vec::from(["remastered","cut man","intro stage","level pack", "kaizo", "1-5", "protovania", "2023 revamped","roll","tutorial","wily stage","6","woman","man","mega man 12", "mega man 13", "mega man 10", "enker", "GB", "NES", "remake","challenge", "recreated", "recreation","demake","7","8","boss rush","crystal gate","{rand::thread_rng().gen_range(1..21)}","kazoo","kiazo","fangame","yellow devil","nico evaluates","rockman and forte","the sequel","1_8_0","1_7_5","1_6_0","puzzle","neo cutman","contest","i wanna kill megaman","force beam","gimmick","contraption","illegal","factory","cutmna","hardman","concept", "mega man x","zero","mega man maker x","community maker","fortnite","joe biden","strike man","megaman","protoman","bass","roll","super hard","impossible","worlds hardest","easy","traditional","megaman 2","magnet","pluto","saturn","stardroid","battan","cossack","stage","airship","fire base","dark man","4","3","2","1","big pets","Ryu","sea",
     "v2","v3","v4","passage","entrance","skull","castle","gun","nrs","vui","feeber","example level","prontoman","mega man","rockman","electro guard","speedrun","tech","glitch","what","a","leafshield","bielles","mmmx","modded","-","-","-","-","-","-","-","-","-","-","-","-","wow","hard","ez","meka snack","go fast","apology level","b.dash","vs","the level","- ultimate edition","deluxe edition","and bass","dark man 5","fortress","castle","cut","intro","stage","12","13","i","wanna","kill","guard","if it was good","improvement","halloween","christmas","walk","finish","line","death","temple","DWN","dead","man","e","ballade","punk","gate","spam","burner man","big fish","stage","pronto man","heat ladder","quint","sunstar","palace","megamix","bpss","cossack","wily","steam man","meme","dead","bals"]);
         let mut name = String::new();
-        for _ in 0..rand::thread_rng().gen_range(2..7) {
-            name = format!("{}{} ",name,names[rand::thread_rng().gen_range(1..names.len()-1)]);
-
+        
+        if fortress == true {
+            name = format!("Mega Man {} - {}s Fortress Stage {}",names[rand::thread_rng().gen_range(1..names.len()-1)],names[rand::thread_rng().gen_range(1..names.len()-1)],thread_rng().gen_range(0..7));
+        }
+        else {
+            let female = rand::thread_rng().gen_bool(1.0/4.0);
+            let mut fstring = String::from("Man");
+            if female == true {
+                fstring = String::from("Woman");
+            }
+            
+            name = format!("Mega Man {} - {} {}s Stage",names[rand::thread_rng().gen_range(1..names.len()-1)],names[rand::thread_rng().gen_range(1..names.len()-1)],fstring);
         }
 
         //init
@@ -371,7 +262,6 @@ pub mod tradhandle {
 
 
         fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv"); //write all data to the mmlv file.
-        data_extract("frosty.mmlv");
         
     }
 
