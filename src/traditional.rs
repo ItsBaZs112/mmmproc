@@ -3,11 +3,12 @@
 pub mod tradhandle {
     use rand::{thread_rng, Rng};
     use std::fs;
+    
     #[derive(Debug,Clone)]
     struct TileData { //this will be used for genrating realistic, megaman-like tile data, complete with an autotile system
         enabled: bool,
-        xpos: f64,
-        ypos: f64,
+        xpos: u64,
+        ypos: u64,
         offset_x: Option<String>,
         offset_y: Option<String>,
         tile_id: Option<String>,
@@ -54,69 +55,45 @@ pub mod tradhandle {
         text
     }
 
-    fn handle_tiling(mut text: String, level_length: i64, verttiles: Vec<i64>) -> (String, Vec<i64>) { //adds tiles
+    fn handle_tiling(mut text: String, level_length: i64, transpoints: Vec<i64>) -> (String, Vec<i64>) { //adds tiles
         let mut pointchecker = 0;
         let mut screeny = 0;
         let tile_id: u64 = rand::thread_rng().gen_range(0..1315);
         let mut vecheight = Vec::new();  
         #[allow(unused_assignments)]
-        let mut can_proceed = false;
-        let mut vecheighttrack = 0;
         let mut height = rand::thread_rng().gen_range(1..13);
+        
         for i in 0..level_length / 16 {
-            
-                
-                if pointchecker < verttiles.len() {
-                    if i-1 == verttiles[pointchecker]/16 && i * 256 != level_length {
-                        for j in 1..height {
-                            
-                            vecheight.push(height); 
-                            vecheighttrack += 1;
-                            text = format!(
-                                "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                                text, i-1 * 16, (screeny)+224 - j * 16, i-1 * 16, (screeny)+224 - j * 16, tile_id,
-                                i-1 * 16, (screeny)+224 - j * 16, i-1 * 16, (screeny)+224 - j * 16, i-1 * 16, (screeny)+224 - j * 16
-                            );
-                        }
+            for j in 0..224/16 {   
+                    println!("{},{}",i*16,j*16);
+                    text = format!(
+                        "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
+                        text, i * 16, (screeny)+ j * 16, i * 16, (screeny)+ j * 16, tile_id,
+                        i * 16, (screeny)+ j * 16, i * 16, (screeny)+j * 16, i * 16, (screeny)+j * 16
+                    );
+                    if pointchecker < transpoints.len() &&i * 16 == transpoints[pointchecker] {
                         screeny+=224;
                         pointchecker+=1;
-                        
                         println!("{screeny}");
-                    }
-                
-                
-            }
-            if vecheighttrack == 0 {
-                height = rand::thread_rng().gen_range(1..13);
-                can_proceed = true;
-            } else {
-                loop {
-                    let temp_height =  rand::thread_rng().gen_range(1..13);
-                    if temp_height > vecheight[vecheighttrack - 1] + 3 || temp_height > 12 {
-                            continue;
-                        } else {
-                            height = temp_height;
-                            can_proceed = true;
-                            break;
+                        for x in 0..256 {
+                            
+                                text = format!(
+                                    "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
+                                    text, (i * 16)+(x*16), (screeny)+ j * 16, (i * 16)+(x*16), (screeny)+ j * 16, tile_id,
+                                    (i * 16)+(x*16), (screeny)+ j * 16, (i * 16)+(x*16), (screeny)+j * 16, (i * 16)+(x*16), (screeny)+j * 16
+                                );
+                            
                         }
                     }
                 }
-        
-                if can_proceed {
-                    
-                    for j in 1..height {
-                        vecheight.push(height); 
-                        vecheighttrack += 1;
-                    
-                        text = format!(
-                            "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                            text, i * 16, (screeny)+224 - j * 16, i * 16, (screeny)+224 - j * 16, tile_id,
-                            i * 16, (screeny)+224 - j * 16, i * 16, (screeny)+224 - j * 16, i * 16, (screeny)+224 - j * 16
-                        );
-                        
-                    }
-                }
-            }
+                
+                
+                
+                
+        }
+        print!("{}",level_length/16);
+            
+            
         
             (text, vecheight)  
         }
@@ -167,7 +144,7 @@ pub mod tradhandle {
         //naming
         let fortress = rand::thread_rng().gen_bool(1.0/4.0);
         let names = Vec::from(["remastered","cut man","intro stage","level pack", "kaizo", "1-5", "protovania", "2023 revamped","roll","tutorial","wily stage","6","woman","man","mega man 12", "mega man 13", "mega man 10", "enker", "GB", "NES", "remake","challenge", "recreated", "recreation","demake","7","8","boss rush","crystal gate","{rand::thread_rng().gen_range(1..21)}","kazoo","kiazo","fangame","yellow devil","nico evaluates","rockman and forte","the sequel","1_8_0","1_7_5","1_6_0","puzzle","neo cutman","contest","i wanna kill megaman","force beam","gimmick","contraption","illegal","factory","cutmna","hardman","concept", "mega man x","zero","mega man maker x","community maker","fortnite","joe biden","strike man","megaman","protoman","bass","roll","super hard","impossible","worlds hardest","easy","traditional","megaman 2","magnet","pluto","saturn","stardroid","battan","cossack","stage","airship","fire base","dark man","4","3","2","1","big pets","Ryu","sea",
-    "v2","v3","v4","passage","entrance","skull","castle","gun","nrs","vui","feeber","example level","prontoman","mega man","rockman","electro guard","speedrun","tech","glitch","what","a","leafshield","bielles","mmmx","modded","-","-","-","-","-","-","-","-","-","-","-","-","wow","hard","ez","meka snack","go fast","apology level","b.dash","vs","the level","- ultimate edition","deluxe edition","and bass","dark man 5","fortress","castle","cut","intro","stage","12","13","i","wanna","kill","guard","if it was good","improvement","halloween","christmas","walk","finish","line","death","temple","DWN","dead","man","e","ballade","punk","gate","spam","burner man","big fish","stage","pronto man","heat ladder","quint","sunstar","palace","megamix","bpss","cossack","wily","steam man","meme","dead","bals"]);
+    "v2","v3","v4","passage","entrance","skull","castle","gun","nrs","vui","feeber","example level","prontoman","mega man","rockman","electro guard","speedrun","tech","glitch","what","a","leafshield","bielles","mmmx","modded","wow","hard","ez","meka snack","go fast","apology level","b.dash","vs","the level","ultimate edition","deluxe edition","and bass","dark man 5","fortress","castle","cut","intro","stage","12","13","i","wanna","kill","guard","if it was good","improvement","halloween","christmas","walk","finish","line","death","temple","DWN","dead","man","e","ballade","punk","gate","spam","burner man","big fish","stage","pronto man","heat ladder","quint","sunstar","palace","megamix","bpss","cossack","wily","steam man","meme","dead","bals"]);
         let mut name = String::new();
         
         if fortress == true {
