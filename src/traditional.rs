@@ -75,12 +75,12 @@ pub mod tradhandle {
                         screeny+=224;
                         pointchecker+=1;
                         println!("{screeny}");
-                        for x in 0..256 {
+                        for x in 0..16 {
                             
                                 text = format!(
                                     "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                                    text, (i * 16)+(x*16), (screeny)+ j * 16, (i * 16)+(x*16), (screeny)+ j * 16, tile_id,
-                                    (i * 16)+(x*16), (screeny)+ j * 16, (i * 16)+(x*16), (screeny)+j * 16, (i * 16)+(x*16), (screeny)+j * 16
+                                    text, (i * 16)+(16), (screeny)+ j * 16, (i * 16)+(16), (screeny)+ j * 16, tile_id,
+                                    (i * 16)+(16), (screeny)+ j * 16, (i * 16)+(16), (screeny)+j * 16, (i * 16)+(16), (screeny)+j * 16
                                 );
                             
                         }
