@@ -2,10 +2,7 @@
 
 pub mod handle {
     use rand::Rng;
-    use std::fs::File;
     use std::fs;
-    use std::io::{BufRead, BufReader, Result};
-    use std::collections::HashMap;
 
     fn handle_weapon(mut text: String) -> String { //weapon system
         //will force a weapon onto slot zero because 90% of the levels i generated didnt have the player have a default wpn

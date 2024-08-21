@@ -9,15 +9,227 @@ pub mod tradhandle {
         enabled: bool,
         xpos: u64,
         ypos: u64,
+        #[allow(dead_code)]
         offset_x: Option<String>,
+        #[allow(dead_code)]
         offset_y: Option<String>,
-        tile_id: Option<String>,
+        tile_id: u64,
         tile: bool,
+        #[allow(dead_code)]
         extra_e: Option<String>,
     }
 
+    fn calculate_tile(data: Option<&TileData>) -> TileData {
+        //taken from mega man maker, ported to rust by yours truly
+        let tst = data.unwrap();
+        let w: u64 = (tst.xpos as f32 / 16.0).round() as u64 % 2;
+        let h: u64 = (tst.ypos as f32 / 16.0).round() as u64 % 2;
 
+        let ssx = 141;
+        let ssy = 71;
+        struct Positions {
+            leftx: u64,
+            midx: u64,
+            rightx: u64,
+            cleftx: u64,
+            crightx: u64,
+            shleftx: u64,
+            shmidx: u64,
+            shrightx: u64,
+            svx: u64,
+            topy: u64,
+            midy: u64,
+            bottomy: u64,
+            ctopy: u64,
+            cbottomy: u64,
+            shtopy: u64,
+            shmidy: u64,
+            shbottomy: u64,
+            shy: u64,
+        }
 
+        let mut pos = Positions {
+            leftx: 18,
+            midx: 53,
+            rightx: 88,
+            cleftx: 123,
+            crightx: 158,
+            shleftx: 18,
+            shmidx: 53,
+            shrightx: 88,
+            svx: 123,
+            topy: 1,
+            midy: 36,
+            bottomy: 71,
+            ctopy: 106,
+            cbottomy: 141,
+            shtopy: 1,
+            shmidy: 36,
+            shbottomy: 71,
+            shy: 106,
+        };
+
+        match w {
+            0 => {
+                pos.leftx = 1;
+                pos.midx = 36;
+                pos.rightx = 71;
+                pos.cleftx = 106;
+                pos.crightx = 141;
+                pos.shleftx = 1;
+                pos.shmidx = 36;
+                pos.shrightx = 71;
+                pos.svx = 106;
+
+            },
+            1 => {
+                pos.leftx = 18;
+                pos.midx = 53;
+                pos.rightx = 88;
+                pos.cleftx = 123;
+                pos.crightx = 158;
+                pos.shleftx = 18;
+                pos.shmidx = 53;
+                pos.shrightx = 88;
+                pos.svx = 123;
+
+            },
+            _ => {}
+
+        }
+        match h {
+            0 => {
+                pos.topy = 1;
+                pos.midy = 36;
+                pos.bottomy = 71;
+                pos.ctopy = 106;
+                pos.cbottomy = 141;
+                pos.shtopy = 1;
+                pos.shmidy = 36;
+                pos.shbottomy = 71;
+                pos.shy = 106;
+
+            },
+            1 => {
+                pos.topy = 18;
+                pos.midy = 53;
+                pos.bottomy = 88;
+                pos.ctopy = 18;
+                pos.cbottomy = 53;
+                pos.shtopy = 88;
+                pos.shmidy = 123;
+                pos.shbottomy = 158;
+                pos.shy = 123;
+            },
+            _ => {}
+
+        }   
+        let tile_pos = if ml && tm {
+            (pos.leftx, pos.topy)
+        } else if ml && bm {
+            (pos.leftx, pos.bottomy)
+        } else if mr && bm {
+            (pos.rightx, pos.bottomy)
+        } else if mr && tm {
+            (pos.rightx, pos.topy)
+        } else {
+            (pos.midx, pos.midy)
+        };
+        TileData {
+            enabled: false,
+            xpos: 0,
+            ypos: 0,
+            offset_x: Some(String::from(tile_pos.0)),
+            offset_y: Some(String::from(tile_pos.1)),
+            tile_id: 0,
+            extra_e: Some(String::from("")),
+            tile: false,
+        }
+        
+    } 
+
+    impl TileData {
+
+        fn autotile_prep(tiles: &TileData, data: &Vec<TileData>) {
+            let mut top_left: Option<&TileData> = None;
+            let mut top_right: Option<&TileData> = None;
+            let mut bottom_right: Option<&TileData> = None;
+            let mut bottom_left: Option<&TileData> = None;
+            let mut left: Option<&TileData> = None;
+            let mut right: Option<&TileData> = None;
+            let mut top: Option<&TileData> = None;
+            let mut bottom: Option<&TileData> = None;
+        
+            for tile in data.iter() {
+                if let (Some(x), Some(y)) = (tiles.xpos.checked_sub(1), tiles.ypos.checked_sub(1)) {
+                    if tile.xpos == x && tile.ypos == y && tile.enabled == true && tile.tile == tiles.tile{
+                        top_left = Some(tile);
+                        
+                    }
+                }
+                if let Some(y) = tiles.ypos.checked_sub(1) {
+                    if tile.xpos == tiles.xpos + 1 && tile.ypos == y && tile.enabled == true&& tile.tile == tiles.tile {
+                        top_right = Some(tile);
+                        
+                    }
+                }
+                if tile.xpos == tiles.xpos + 1 && tile.ypos == tiles.ypos + 1 && tile.enabled == true && tile.tile == tiles.tile{
+                    bottom_right = Some(tile);
+                    
+                }
+                if let Some(x) = tiles.xpos.checked_sub(1) {
+                    if tile.xpos == x && tile.ypos == tiles.ypos + 1 && tile.enabled == true && tile.tile == tiles.tile{
+                        bottom_left = Some(tile);
+                        
+                    }
+                }
+                if let Some(x) = tiles.xpos.checked_sub(1) {
+                    if tile.xpos == x && tile.ypos == tiles.ypos && tile.enabled == true && tile.tile == tiles.tile{
+                        left = Some(tile);
+                        
+                    }
+                }
+                if tile.xpos == tiles.xpos + 1 && tile.ypos == tiles.ypos && tile.enabled == true&& tile.tile == tiles.tile {
+                    right = Some(tile);
+                    
+                }
+                if let Some(y) = tiles.ypos.checked_sub(1) {
+                    if tile.xpos == tiles.xpos && tile.ypos == y && tile.enabled == true&& tile.tile == tiles.tile {
+                        top = Some(tile);
+                        
+                    }
+                }
+                if tile.xpos == tiles.xpos && tile.ypos == tiles.ypos + 1 && tile.enabled == true && tile.tile == tiles.tile{
+                    bottom = Some(tile);
+                    
+                }
+                let top_left_tile = calculate_tile(top_left);
+                let top_right_tile = calculate_tile(top_right);
+                let bottom_left_tile = calculate_tile(bottom_left);
+                let bottom_right_tile = calculate_tile(bottom_right);
+                let bottom_tile = calculate_tile(bottom);
+                let top_tile = calculate_tile(top);
+                let right_tile = calculate_tile(right);
+                let left_tile = calculate_tile(left);
+            }
+        }
+        
+
+    }
+    struct Rules {
+        use_ceilings: Vec<bool>, //a u8-carrying vector which essentially tracks
+        //all values of transpoints and decides if there will be ceilings in this section.
+        use_celings_height: Vec<u8>, //see previous field. each value given will be how much tiles a ceiling will be
+        //per ceiling section.
+        fortress_arena: bool, //swaps out the BORING robot master arena in place of a COOLER (and emptier) fortress boss arena.
+        enemies: Vec<u16>, //u16 vector that contains all the enemy types that will be used in the level.
+        //not a u8 because by the point 1.9 drops there will (likely) be more than 255 enemy ids in the game
+        limit_bosstype: bool, //limits robot masters to rm levels and fort bosses (save for the darkmen) to fort levels.
+        //dark man 3 and dark man 4 aren't affected by this variable due to being fort bosses that act like rms.
+        limit_bosses: bool, //will likely not be in initial release. when true will allow multiple bosses in 1 level.
+        bossentrance: bool, //is there a coridoor before the boss? 
+    }
+    
     fn handle_weapon(mut text: String) -> String { //weapon system
         //will force a weapon onto slot zero because 90% of the levels i generated didnt have the player have a default wpn
         let dfwpn_rng: u64 = rand::thread_rng().gen_range(0..105);
@@ -55,47 +267,131 @@ pub mod tradhandle {
         text
     }
 
-    fn handle_tiling(mut text: String, level_length: i64, transpoints: Vec<i64>) -> (String, Vec<i64>) { //adds tiles
+    fn handle_tiling(mut text: String, level_length: i64, transpoints: Vec<i64>,rules: Rules) -> (String, Vec<TileData>) { //adds tiles
         let mut pointchecker = 0;
         let mut screeny = 0;
         let tile_id: u64 = rand::thread_rng().gen_range(0..1315);
         let mut vecheight = Vec::new();  
         #[allow(unused_assignments)]
         let mut height = rand::thread_rng().gen_range(1..13);
+        let mut counter = 0;
         
         for i in 0..level_length / 16 {
-            for j in 0..224/16 {   
-                    println!("{},{}",i*16,j*16);
-                    text = format!(
-                        "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                        text, i * 16, (screeny)+ j * 16, i * 16, (screeny)+ j * 16, tile_id,
-                        i * 16, (screeny)+ j * 16, i * 16, (screeny)+j * 16, i * 16, (screeny)+j * 16
-                    );
-                    if pointchecker < transpoints.len() &&i * 16 == transpoints[pointchecker] {
-                        screeny+=224;
-                        pointchecker+=1;
-                        println!("{screeny}");
-                        for x in 0..16 {
-                            
-                                text = format!(
-                                    "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                                    text, (i * 16)+(16), (screeny)+ j * 16, (i * 16)+(16), (screeny)+ j * 16, tile_id,
-                                    (i * 16)+(16), (screeny)+ j * 16, (i * 16)+(16), (screeny)+j * 16, (i * 16)+(16), (screeny)+j * 16
-                                );
-                            
+            match rules.fortress_arena {
+                false => {
+                for j in 0..224/16 {
+                        println!("{},{}",i*16,j*16);
+                        vecheight.push(TileData {
+                            enabled: true,
+                            xpos: (i * 16) as u64,
+                            ypos: (screeny)+ (j*16),
+                            offset_x: Some(String::from("1")),
+                            offset_y: Some(String::from("1")),
+                            tile_id: tile_id,
+                            extra_e: Some(format!("{}",tile_id)),
+                            tile: true,
+                        });
+                        counter+=1;
+                        /*
+                        text = format!(
+                            "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
+                            text, i * 16, (screeny)+ j * 16, i * 16, (screeny)+ j * 16, tile_id,
+                            i * 16, (screeny)+ j * 16, i * 16, (screeny)+j * 16, i * 16, (screeny)+j * 16
+                        );
+                        */
+                        if pointchecker < transpoints.len() &&i * 16 == transpoints[pointchecker] {
+                            screeny+=224;
+                            pointchecker+=1;
+                            println!("{screeny}");
+                            for y in 0..14 {
+                                for x in 0..16 {
+                                    vecheight.push(TileData {
+                                        enabled: true,
+                                        xpos: (x*16)+(i * 16) as u64,
+                                        ypos: (screeny-224)+ (y*16),
+                                        offset_x: Some(String::from("1")),
+                                        offset_y: Some(String::from("1")),
+                                        tile_id: tile_id,
+                                        extra_e: Some(format!("{}",tile_id)),
+                                        tile: true,
+                                    });
+                                    counter+=1;
+                                    /*
+                                    text = format!(
+                                        "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
+                                        text, (x*16)+(i * 16), (screeny-224)+ (y*16), (x*16)+(i * 16), (screeny-224)+ (y*16), tile_id,
+                                        (x*16)+(i * 16), (screeny-224)+ (y*16), (x*16)+(i * 16), (screeny-224)+(y*16),(x*16)+(i * 16), (screeny-224)
+                                    );
+                                    */
+
+                                }
+                            }
                         }
                     }
                 }
+                true => {
+                    if i >= ((level_length-256)/16) {
+                        vecheight.push(TileData {
+                            enabled: true,
+                            xpos: (i * 16) as u64,
+                            ypos: screeny + 224-16,
+                            offset_x: Some(String::from("1")),
+                            offset_y: Some(String::from("1")),
+                            tile_id: tile_id,
+                            extra_e: Some(format!("{}",tile_id)),
+                            tile: true,
+                        });
+                        counter+=1;
+                    }
+                    else {
+                        for j in 0..224/16 {
+                            println!("{},{}",i*16,j*16);
+                            vecheight.push(TileData {
+                                enabled: true,
+                                xpos: (i * 16) as u64,
+                                ypos: (screeny)+ (j*16),
+                                offset_x: Some(String::from("1")),
+                                offset_y: Some(String::from("1")),
+                                tile_id: tile_id,
+                                extra_e: Some(format!("{}",tile_id)),
+                                tile: true,
+                            });
+                            counter+=1;
+                            if pointchecker < transpoints.len() && i * 16 == transpoints[pointchecker] {
+                                screeny+=224;
+                                pointchecker+=1;
+                                println!("{screeny}");
+                                for y in 0..14 {
+                                    for x in 0..16 {
+                                        vecheight.push(TileData {
+                                            enabled: true,
+                                            xpos: (x*16)+(i * 16) as u64,
+                                            ypos: (screeny-224)+ (y*16),
+                                            offset_x: Some(String::from("1")),
+                                            offset_y: Some(String::from("1")),
+                                            tile_id: tile_id,
+                                            extra_e: Some(format!("{}",tile_id)),
+                                            tile: true,
+                                        });
+                                        counter+=1;
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+
+                }
                 
-                
-                
+                _ => {
+                    panic!("failed to get fortress arena info");
+
+                }
+            }
                 
         }
         print!("{}",level_length/16);
-            
-            
-        
-            (text, vecheight)  
+        (text, vecheight)  
         }
 
     fn handle_abilities(mut text: String) -> String { //changes default level abilities
@@ -142,13 +438,13 @@ pub mod tradhandle {
         let mut screeny = 0;
 
         //naming
-        let fortress = rand::thread_rng().gen_bool(1.0/4.0);
+        let fortress = rand::thread_rng().gen_bool(1.0/3.0);
         let names = Vec::from(["remastered","cut man","intro stage","level pack", "kaizo", "1-5", "protovania", "2023 revamped","roll","tutorial","wily stage","6","woman","man","mega man 12", "mega man 13", "mega man 10", "enker", "GB", "NES", "remake","challenge", "recreated", "recreation","demake","7","8","boss rush","crystal gate","{rand::thread_rng().gen_range(1..21)}","kazoo","kiazo","fangame","yellow devil","nico evaluates","rockman and forte","the sequel","1_8_0","1_7_5","1_6_0","puzzle","neo cutman","contest","i wanna kill megaman","force beam","gimmick","contraption","illegal","factory","cutmna","hardman","concept", "mega man x","zero","mega man maker x","community maker","fortnite","joe biden","strike man","megaman","protoman","bass","roll","super hard","impossible","worlds hardest","easy","traditional","megaman 2","magnet","pluto","saturn","stardroid","battan","cossack","stage","airship","fire base","dark man","4","3","2","1","big pets","Ryu","sea",
     "v2","v3","v4","passage","entrance","skull","castle","gun","nrs","vui","feeber","example level","prontoman","mega man","rockman","electro guard","speedrun","tech","glitch","what","a","leafshield","bielles","mmmx","modded","wow","hard","ez","meka snack","go fast","apology level","b.dash","vs","the level","ultimate edition","deluxe edition","and bass","dark man 5","fortress","castle","cut","intro","stage","12","13","i","wanna","kill","guard","if it was good","improvement","halloween","christmas","walk","finish","line","death","temple","DWN","dead","man","e","ballade","punk","gate","spam","burner man","big fish","stage","pronto man","heat ladder","quint","sunstar","palace","megamix","bpss","cossack","wily","steam man","meme","dead","bals"]);
         let mut name = String::new();
         
         if fortress == true {
-            name = format!("Mega Man {} - {}s Fortress Stage {}",names[rand::thread_rng().gen_range(1..names.len()-1)],names[rand::thread_rng().gen_range(1..names.len()-1)],thread_rng().gen_range(0..7));
+            name = format!("Mega Man {} - {}s Fortress Stage {}",names[rand::thread_rng().gen_range(1..names.len()-1)],names[rand::thread_rng().gen_range(1..names.len()-1)],thread_rng().gen_range(0..70));
         }
         else {
             let female = rand::thread_rng().gen_bool(1.0/4.0);
@@ -160,6 +456,23 @@ pub mod tradhandle {
             name = format!("Mega Man {} - {} {}s Stage",names[rand::thread_rng().gen_range(1..names.len()-1)],names[rand::thread_rng().gen_range(1..names.len()-1)],fstring);
         }
 
+        let mut rule = Rules {
+            use_ceilings: Vec::new(),
+            use_celings_height: Vec::new(),
+            enemies: Vec::new(),
+            fortress_arena: false,
+            limit_bosses: true,
+            limit_bosstype: true,
+            bossentrance: fortress,
+        };
+        for t in 0..transpoints.len() {
+            rule.use_ceilings.push(thread_rng().gen_bool(1.0/2.0));
+            rule.use_celings_height.push(thread_rng().gen_range(1..5));
+            
+        }
+        rule.limit_bosses = true;
+        rule.fortress_arena = fortress;
+        rule.limit_bosstype = true;
         //init
         let mut contents = String::from("[Level]");
         //weapons
@@ -210,9 +523,17 @@ pub mod tradhandle {
         }
 
         //TILING!!!!!!!!!!! 
-        let binding = handle_tiling(contents.clone(),length,transpoints.clone());
+        let binding = handle_tiling(contents.clone(),length,transpoints.clone(),rule);
         contents = binding.0;
-        let vecheights: Vec<i64> = binding.1;
+        let vecheights: Vec<TileData> = binding.1;
+        for i in 0..vecheights.len() {
+            contents = format!(
+                "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
+                contents, vecheights[i].xpos, vecheights[i].ypos, vecheights[i].xpos, vecheights[i].ypos, vecheights[i].tile_id,
+                vecheights[i].xpos, vecheights[i].ypos, vecheights[i].xpos, vecheights[i].ypos, vecheights[i].xpos, vecheights[i].ypos
+            );
+
+        }
         let objpoints = transpoints.clone();
 
         //oh and object placements
@@ -237,7 +558,10 @@ pub mod tradhandle {
         //let binding  = handle_boss(contents.clone(),bossid,vecheights.clone(),length.clone(),transpoints.clone());
         //contents = binding;
 
-
+        //auto tiling
+        for i in 0..vecheights.len() {
+            TileData::autotile_prep(&vecheights[i].clone(),&vecheights);
+        }
         fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv"); //write all data to the mmlv file.
         
     }
