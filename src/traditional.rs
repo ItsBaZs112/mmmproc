@@ -209,7 +209,7 @@ pub mod tradhandle {
                 (false, true, false, true, false, true, false, true) => (pos.leftx, pos.topy), //topleft corner
                 _ => (pos.midx, pos.midy),
             };
-            println!("{}, {}", tile_pos.0, tile_pos.1);
+
             TileData {
                 enabled: true,
                 xpos: tiles.xpos,
@@ -223,6 +223,8 @@ pub mod tradhandle {
             }
         }
     }
+
+    #[derive(Debug, Clone)]
     struct Rules {
         use_ceilings: Vec<bool>, //a u8-carrying vector which essentially tracks
         //all values of transpoints and decides if there will be ceilings in this section.
@@ -304,11 +306,11 @@ pub mod tradhandle {
                                 });
                                 counter += 1;
                             }
-                            if i == ((level_length-256)/16) || i == ((level_length)/16)-1{
+                            if i == ((level_length - 256) / 16) || i == ((level_length) / 16) - 1 {
                                 vecheight.push(TileData {
                                     enabled: true,
                                     xpos: (i * 16) as u64,
-                                    ypos: screeny+(j*16),
+                                    ypos: screeny + (j * 16),
                                     offset_x: 1,
                                     offset_y: 1,
                                     tile_id: tile_id,
@@ -316,7 +318,6 @@ pub mod tradhandle {
                                     tile: true,
                                 });
                                 counter += 1;
-                                
                             }
                             vecheight.push(TileData {
                                 enabled: true,
@@ -329,7 +330,6 @@ pub mod tradhandle {
                                 tile: true,
                             });
                             counter += 1;
-                            
                         }
                     } else {
                         for j in 0..224 / 16 {
@@ -432,17 +432,44 @@ pub mod tradhandle {
         (text, vecheight)
     }
 
+    fn handle_terraform(
+        vecheights: Vec<TileData>,
+        rules: Rules,
+        level_length: i64,
+    ) -> Vec<TileData> {
+        let mut counter = 0;
+        let mut v = Vec::new();
+        let mut screeny = 0;
+        for i in 0..vecheights.len() {
+            v.push(vecheights[counter].clone());
+            println!("{:?}", vecheights[counter]);
+            /*TileData {
+                enabled: true,
+                xpos: 0,
+                ypos: 0,
+                offset_x: 1,
+                offset_y: 1,
+                tile_id: 0,
+                extra_e: Some(format!("{}", 0)),
+                tile: true,
+            }
+            */
+            counter += 1;
+        }
+        v
+    }
+
     fn handle_abilities(mut text: String) -> String {
         //changes default level abilities
         let can_charge; //can megaman charge buster?
-        let can_charge_rng = rand::thread_rng().gen_range(0..4);
-        if can_charge_rng == 4 {
+        let can_charge_rng = rand::thread_rng().gen_bool(8.0 / 10.0); //8/22: updated rng
+        if can_charge_rng == true {
             can_charge = 0;
         } else {
             can_charge = 1;
         }
-        let charge_rng = rand::thread_rng().gen_range(4..6); //what charge shot will megaman use?
-        let slide_rng = rand::thread_rng().gen_range(0..5); //can megaman slide?
+        let charge_rng = rand::thread_rng().gen_range(4..7); //what charge shot will megaman use? 8/22: fixed the rng, now mm6 charge shots can be used
+        let slide_rng = rand::thread_rng().gen_bool(9.0 / 10.0); //can megaman slide? 8/22: updated rng
         text = format!(
             "{}\n1b=\"{}\"\n1c=\"{}\"\n1d=\"{}\"\n",
             text, slide_rng, can_charge, charge_rng
@@ -466,348 +493,377 @@ pub mod tradhandle {
 
         text
     }
-    pub fn file_write() {
-        let bgcount = rand::thread_rng().gen_range(0..732);
-        let length: i64 = rand::thread_rng().gen_range(1..50) * 256;
-        //screen trans
-        let mut transpoints = Vec::new();
-        for c in 0..length / 256 {
-            let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
-            if transition == true && c * 256 != length - 256 {
-                transpoints.push(c * 256);
-            }
-        }
-        let mut pointchecker = 0;
-        let mut screeny = 0;
 
-        //naming
-        let fortress = rand::thread_rng().gen_bool(1.0 / 3.0);
-        let names = Vec::from([
-            "remastered",
-            "cut man",
-            "intro stage",
-            "level pack",
-            "kaizo",
-            "1-5",
-            "protovania",
-            "2023 revamped",
-            "roll",
-            "tutorial",
-            "wily stage",
-            "6",
-            "woman",
-            "man",
-            "mega man 12",
-            "mega man 13",
-            "mega man 10",
-            "enker",
-            "GB",
-            "NES",
-            "remake",
-            "challenge",
-            "recreated",
-            "recreation",
-            "demake",
-            "7",
-            "8",
-            "boss rush",
-            "crystal gate",
-            "{rand::thread_rng().gen_range(1..21)}",
-            "kazoo",
-            "kiazo",
-            "fangame",
-            "yellow devil",
-            "nico evaluates",
-            "rockman and forte",
-            "the sequel",
-            "1_8_0",
-            "1_7_5",
-            "1_6_0",
-            "puzzle",
-            "neo cutman",
-            "contest",
-            "i wanna kill megaman",
-            "force beam",
-            "gimmick",
-            "contraption",
-            "illegal",
-            "factory",
-            "cutmna",
-            "hardman",
-            "concept",
-            "x",
-            "zero",
-            "mega man maker x",
-            "community",
-            "fortnite",
-            "joe biden",
-            "strike man",
-            "megaman",
-            "protoman",
-            "bass",
-            "roll",
-            "super hard",
-            "impossible",
-            "worlds hardest",
-            "easy",
-            "traditional",
-            "megaman 2",
-            "magnet",
-            "pluto",
-            "saturn",
-            "stardroid",
-            "battan",
-            "cossack",
-            "stage",
-            "airship",
-            "fire base",
-            "dark man",
-            "4",
-            "3",
-            "2",
-            "1",
-            "big pets",
-            "Ryu",
-            "sea",
-            "v2",
-            "v3",
-            "v4",
-            "passage",
-            "entrance",
-            "skull",
-            "castle",
-            "gun",
-            "nrs",
-            "vui",
-            "feeber",
-            "example level",
-            "prontoman",
-            "mega man",
-            "rockman",
-            "electro guard",
-            "speedrun",
-            "tech",
-            "glitch",
-            "what",
-            "a",
-            "leafshield",
-            "bielles",
-            "mmmx",
-            "modded",
-            "wow",
-            "hard",
-            "ez",
-            "meka snack",
-            "go fast",
-            "apology level",
-            "b dash",
-            "vs",
-            "the level",
-            "ultimate edition",
-            "deluxe edition",
-            "and bass",
-            "dark man 5",
-            "fortress",
-            "castle",
-            "cut",
-            "intro",
-            "stage",
-            "12",
-            "13",
-            "i",
-            "wanna",
-            "kill",
-            "guard",
-            "if it was good",
-            "improvement",
-            "halloween",
-            "christmas",
-            "walk",
-            "finish",
-            "line",
-            "death",
-            "temple",
-            "DWN",
-            "dead",
-            "man",
-            "e",
-            "ballade",
-            "punk",
-            "gate",
-            "spam",
-            "burner",
-            "big fish",
-            "stage",
-            "pronto",
-            "heat ladder",
-            "quint",
-            "sunstar",
-            "palace",
-            "megamix",
-            "bpss",
-            "cossack",
-            "wily",
-            "steam",
-            "meme",
-            "dead",
-            "bals",
-        ]);
-        let mut name = String::new();
-
-        if fortress == true {
-            name = format!(
-                "Mega Man {} - {}s Fortress Stage {}",
-                names[rand::thread_rng().gen_range(1..names.len() - 1)],
-                names[rand::thread_rng().gen_range(1..names.len() - 1)],
-                thread_rng().gen_range(0..70) //picks a random number from 1 to 69. not 70, that's unfunny.
-            );
-        } else {
-            let female = rand::thread_rng().gen_bool(1.0 / 4.0); //gender decider
-            let mut fstring = String::from("Man");
-            if female == true {
-                fstring = String::from("Woman");
-            }
-
-            name = format!(
-                "Mega Man {} - {} {}s Stage",
-                names[rand::thread_rng().gen_range(1..names.len() - 1)],
-                names[rand::thread_rng().gen_range(1..names.len() - 1)],
-                fstring
-            );
-        }
-
-        let mut rule = Rules {
-            use_ceilings: Vec::new(),
-            use_celings_height: Vec::new(),
-            enemies: Vec::new(),
-            fortress_arena: false,
-            limit_bosses: true,
-            limit_bosstype: true,
-            bossentrance: fortress,
+    pub fn file_write(batch: bool) {
+        let mut batchloop = 10;
+        if batch == false {
+            batchloop = 1;
         };
-        for t in 0..transpoints.len() {
-            rule.use_ceilings.push(thread_rng().gen_bool(1.0 / 2.0));
-            rule.use_celings_height.push(thread_rng().gen_range(1..5));
-        }
-        rule.limit_bosses = true;
-        rule.fortress_arena = fortress;
-        rule.limit_bosstype = true;
-        //init
-        let mut contents = String::from("[Level]");
-        //weapons
-        let binding = handle_weapon(contents.clone());
-        contents = binding;
-        //general things
-        let mugshot = rand::thread_rng().gen_range(1..41); //boss mugshot id
-        contents = format!("{}\n0v=\"1.8.5.2\"\n1a=\"{}\"\n4a=\"MMMRNG\"\n4b=\"{}\"\n0a=\"000000\"\n1p=\"0\"\n1q=\"{}\"\n1r=\"0\"\n1s=\"4480\"\n1bc=\"1\"\n1f=\"{}\"\n1e=\"{}\"\n", contents,name,rand::thread_rng().gen_range(0..161),length,mugshot,rand::thread_rng().gen_range(0..51)); //adds general level info
-                                                                                                                                                                                                                                                                                            //musica
-        let binding = handle_music(contents.clone());
-        contents = binding;
-        //player abilities
-        let binding = handle_abilities(contents.clone());
-        contents = binding;
+        for counts in 0..batchloop {
+            let bgcount = rand::thread_rng().gen_range(0..732);
+            let length: i64 = rand::thread_rng().gen_range(17..32) * 256;
+            //screen trans
+            let mut transpoints = Vec::new();
+        
+            
+                for c in 0..length / 256 {
+                    let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
 
-        //activate sections and add backgrounds
-        for i in -1..length / 256 {
-            if pointchecker < transpoints.len() {
-                if i - 1 == transpoints[pointchecker] / 256 {
+                    if transition == true && c * 256 != length - 256 {
+                        transpoints.push(c * 256);
+                        
+                    }
+                }
+            
+            let mut pointchecker = 0;
+            let mut screeny = 0;
+
+            //naming
+            let fortress = rand::thread_rng().gen_bool(1.0 / 4.5);
+            let names = Vec::from([
+                "remastered",
+                "cut man",
+                "intro stage",
+                "level pack",
+                "kaizo",
+                "1-5",
+                "protovania",
+                "2023 revamped",
+                "roll",
+                "tutorial",
+                "wily stage",
+                "6",
+                "woman",
+                "man",
+                "mega man 12",
+                "mega man 13",
+                "mega man 10",
+                "enker",
+                "GB",
+                "NES",
+                "remake",
+                "challenge",
+                "recreated",
+                "recreation",
+                "demake",
+                "7",
+                "8",
+                "boss rush",
+                "crystal gate",
+                "{rand::thread_rng().gen_range(1..21)}",
+                "kazoo",
+                "kiazo",
+                "fangame",
+                "yellow devil",
+                "nico evaluates",
+                "rockman and forte",
+                "the sequel",
+                "1_8_0",
+                "1_7_5",
+                "1_6_0",
+                "puzzle",
+                "neo cutman",
+                "contest",
+                "i wanna kill megaman",
+                "force beam",
+                "gimmick",
+                "contraption",
+                "illegal",
+                "factory",
+                "cutmna",
+                "hardman",
+                "concept",
+                "x",
+                "zero",
+                "mega man maker x",
+                "community",
+                "fortnite",
+                "joe biden",
+                "strike man",
+                "megaman",
+                "protoman",
+                "bass",
+                "roll",
+                "super hard",
+                "impossible",
+                "worlds hardest",
+                "easy",
+                "traditional",
+                "megaman 2",
+                "magnet",
+                "pluto",
+                "saturn",
+                "stardroid",
+                "battan",
+                "cossack",
+                "stage",
+                "airship",
+                "fire base",
+                "dark man",
+                "4",
+                "3",
+                "2",
+                "1",
+                "big pets",
+                "Ryu",
+                "sea",
+                "v2",
+                "v3",
+                "v4",
+                "passage",
+                "entrance",
+                "skull",
+                "castle",
+                "gun",
+                "nrs",
+                "vui",
+                "feeber",
+                "example level",
+                "prontoman",
+                "mega man",
+                "rockman",
+                "electro guard",
+                "speedrun",
+                "tech",
+                "glitch",
+                "what",
+                "a",
+                "leafshield",
+                "bielles",
+                "mmmx",
+                "modded",
+                "wow",
+                "hard",
+                "ez",
+                "meka snack",
+                "go fast",
+                "apology level",
+                "b dash",
+                "vs",
+                "the level",
+                "ultimate edition",
+                "deluxe edition",
+                "and bass",
+                "dark man 5",
+                "fortress",
+                "castle",
+                "cut",
+                "intro",
+                "stage",
+                "12",
+                "13",
+                "i",
+                "wanna",
+                "kill",
+                "guard",
+                "if it was good",
+                "improvement",
+                "halloween",
+                "christmas",
+                "walk",
+                "finish",
+                "line",
+                "death",
+                "temple",
+                "DWN",
+                "dead",
+                "man",
+                "e",
+                "ballade",
+                "punk",
+                "gate",
+                "spam",
+                "burner",
+                "big fish",
+                "stage",
+                "pronto",
+                "heat ladder",
+                "quint",
+                "sunstar",
+                "palace",
+                "megamix",
+                "bpss",
+                "cossack",
+                "wily",
+                "steam",
+                "meme",
+                "dead",
+                "bals",
+            ]);
+            let mut name = String::new();
+
+            if fortress == true {
+                name = format!(
+                    "Mega Man {} - {}s Fortress Stage {}",
+                    names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                    names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                    thread_rng().gen_range(0..70) //picks a random number from 1 to 69. not 70, that's unfunny.
+                );
+            } else {
+                let female = rand::thread_rng().gen_bool(1.0 / 4.0); //gender decider
+                let mut fstring = String::from("Man");
+                if female == true {
+                    fstring = String::from("Woman");
+                }
+
+                name = format!(
+                    "Mega Man {} - {} {}s Stage",
+                    names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                    names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                    fstring
+                );
+            }
+
+            let mut rule = Rules {
+                use_ceilings: Vec::new(),
+                use_celings_height: Vec::new(),
+                enemies: Vec::new(),
+                fortress_arena: false,
+                limit_bosses: true,
+                limit_bosstype: true,
+                bossentrance: fortress,
+            };
+            for t in 0..transpoints.len() {
+                rule.use_ceilings.push(thread_rng().gen_bool(1.0 / 2.0));
+                rule.use_celings_height.push(thread_rng().gen_range(1..5));
+            }
+            rule.limit_bosses = true;
+            rule.fortress_arena = fortress;
+            rule.limit_bosstype = true;
+            //init
+            let mut contents = String::from("[Level]");
+            //weapons
+            let binding = handle_weapon(contents.clone());
+            contents = binding;
+            //general things
+            let mugshot = rand::thread_rng().gen_range(1..41); //boss mugshot id
+            contents = format!("{}\n0v=\"1.8.5.2\"\n1a=\"{}\"\n4a=\"MMMRNG\"\n4b=\"{}\"\n0a=\"000000\"\n1p=\"0\"\n1q=\"{}\"\n1r=\"0\"\n1s=\"4480\"\n1bc=\"1\"\n1f=\"{}\"\n1e=\"{}\"\n", contents,name,rand::thread_rng().gen_range(0..161),length,mugshot,rand::thread_rng().gen_range(0..51)); //adds general level info
+                                                                                                                                                                                                                                                                                                //musica
+            let binding = handle_music(contents.clone());
+            contents = binding;
+            //player abilities
+            let binding = handle_abilities(contents.clone());
+            contents = binding;
+
+            //activate sections and add backgrounds
+            for i in -1..length / 256 {
+                if pointchecker < transpoints.len() - 2 {
+                    if i - 1 == transpoints[pointchecker] / 256 {
+                        if i != -1 {
+                            screeny += 224;
+                            pointchecker += 1;
+                            contents =
+                                format!("{}2a{},{}=\"1\"\n", contents, (i - 1) * 256, screeny);
+                            //add bg
+
+                            contents = format!(
+                                "{}2d{},{}=\"{}\"\n",
+                                contents,
+                                (i - 1) * 256,
+                                screeny,
+                                bgcount
+                            );
+                            println!("{screeny}");
+                        } else {
+                            screeny += 224;
+                            pointchecker += 1;
+                            contents = format!("{}2a{},{}=\"1\"\n", contents, (i) * 256, screeny);
+                            //add bg
+
+                            contents =
+                                format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
+                            println!("{screeny}");
+                        }
+                    }
+                } else {
                     if i != -1 {
                         screeny += 224;
                         pointchecker += 1;
-                        contents = format!("{}2a{},{}=\"1\"\n", contents, (i - 1) * 256, screeny);
-                        //add bg
-
-                        contents = format!(
-                            "{}2d{},{}=\"{}\"\n",
-                            contents,
-                            (i - 1) * 256,
-                            screeny,
-                            bgcount
-                        );
-                        println!("{screeny}");
+                        contents = format!("{}2b{},{}=\"0\"", contents, (i - 1) * 256, screeny,);
                     } else {
                         screeny += 224;
                         pointchecker += 1;
-                        contents = format!("{}2a{},{}=\"1\"\n", contents, (i) * 256, screeny);
-                        //add bg
-
-                        contents =
-                            format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
-                        println!("{screeny}");
+                        contents = format!("{}2b{},{}=\"0\"", contents, (i) * 256, screeny,);
                     }
                 }
+                if i != -1 {
+                    contents = format!("{}2a{},{}=\"1\"\n", contents, i * 256, screeny);
+                    //add bg
+                    contents = format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
+                    println!("section at {},{} activated.", i * 256, screeny);
+                }
             }
-            if i != -1 {
-                contents = format!("{}2a{},{}=\"1\"\n", contents, i * 256, screeny);
-                //add bg
-                contents = format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
-                println!("section at {},{} activated.", i * 256, screeny);
+
+            //TILING!!!!!!!!!!!
+            let binding =
+                handle_tiling(contents.clone(), length, transpoints.clone(), rule.clone());
+            contents = binding.0;
+            let mut vecheights: Vec<TileData> = binding.1;
+            //terraforming
+            vecheights = handle_terraform(vecheights, rule.clone(), length);
+
+            //auto tiling
+            for i in 0..vecheights.len() {
+                vecheights[i] = TileData::autotile_prep(&vecheights[i].clone(), &vecheights);
             }
-        }
-
-        //TILING!!!!!!!!!!!
-        let binding = handle_tiling(contents.clone(), length, transpoints.clone(), rule);
-        contents = binding.0;
-        let mut vecheights: Vec<TileData> = binding.1;
-
-        //auto tiling
-        for i in 0..vecheights.len() {
-            vecheights[i] = TileData::autotile_prep(&vecheights[i].clone(), &vecheights);
-        }
-        for i in 0..vecheights.len() {
-            contents = format!(
-                "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"{}\"\nk{},{}=\"{}\"\n",
-                contents,
-                vecheights[i].xpos,
-                vecheights[i].ypos,
-                vecheights[i].xpos,
-                vecheights[i].ypos,
-                vecheights[i].tile_id,
-                vecheights[i].xpos,
-                vecheights[i].ypos,
-                vecheights[i].xpos,
-                vecheights[i].ypos,
-                vecheights[i].offset_x,
-                vecheights[i].xpos,
-                vecheights[i].ypos,
-                vecheights[i].offset_y
-            );
-        }
-        let objpoints = transpoints.clone();
-
-        //oh and object placements
-        //let binding = handle_megaman(contents.clone(),vecheights.clone());
-        //contents = binding.0;
-        //let binding = handle_objs(contents.clone(),vecheights.clone(),length,binding.1,binding.2,objpoints);
-        //contents = binding;
-
-        //handle boss placement
-        let mut bossid;
-        loop {
-            bossid = rand::thread_rng().gen_range(1..68);
-            if bossid != 33
-                && bossid != 0
-                && bossid != 34
-                && bossid != 1
-                && bossid != 55
-                && bossid != 56
-                && bossid != 9
-                && bossid != 57
-                && bossid != 68
-                && bossid != 36
-                && bossid != 59
-                && bossid != 60
-            {
-                //disables boss suppressor, boss doors, and kamegoro generators as they softlock the player and arent bosses anyways. also disables boobeam trap and gemini man to prevent crashes
-                break;
-            } else {
-                continue;
+            for i in 0..vecheights.len() {
+                contents = format!(
+                    "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"{}\"\nk{},{}=\"{}\"\n",
+                    contents,
+                    vecheights[i].xpos,
+                    vecheights[i].ypos,
+                    vecheights[i].xpos,
+                    vecheights[i].ypos,
+                    vecheights[i].tile_id,
+                    vecheights[i].xpos,
+                    vecheights[i].ypos,
+                    vecheights[i].xpos,
+                    vecheights[i].ypos,
+                    vecheights[i].offset_x,
+                    vecheights[i].xpos,
+                    vecheights[i].ypos,
+                    vecheights[i].offset_y
+                );
             }
-        }
-        //let binding  = handle_boss(contents.clone(),bossid,vecheights.clone(),length.clone(),transpoints.clone());
-        //contents = binding;
+            let objpoints = transpoints.clone();
 
-        fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv");
-        //write all data to the mmlv file.
+            //oh and object placements
+            //let binding = handle_megaman(contents.clone(),vecheights.clone());
+            //contents = binding.0;
+            //let binding = handle_objs(contents.clone(),vecheights.clone(),length,binding.1,binding.2,objpoints);
+            //contents = binding;
+
+            //handle boss placement
+            let mut bossid;
+            loop {
+                bossid = rand::thread_rng().gen_range(1..70);
+                if bossid != 33
+                    && bossid != 0
+                    && bossid != 34
+                    && bossid != 1
+                    && bossid != 55
+                    && bossid != 56
+                    && bossid != 9
+                    && bossid != 57
+                    && bossid != 68
+                    && bossid != 36
+                    && bossid != 59
+                    && bossid != 60
+                {
+                    //disables boss suppressor, boss doors, and kamegoro generators as they softlock the player and arent bosses anyways. also disables boobeam trap and gemini man to prevent crashes
+                    break;
+                } else {
+                    continue;
+                }
+            }
+            //let binding  = handle_boss(contents.clone(),bossid,vecheights.clone(),length.clone(),transpoints.clone());
+            //contents = binding;
+
+            fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv");
+            if batch {
+                fs::rename("level.mmlv", format!("level{}.mmlv", counts + 1));
+            }
+            //write all data to the mmlv file.
+        }
     }
 }
