@@ -1,220 +1,227 @@
-
-
 pub mod tradhandle {
     use rand::{thread_rng, Rng};
     use std::fs;
-    
-    #[derive(Debug,Clone)]
-    struct TileData { //this will be used for genrating realistic, megaman-like tile data, complete with an autotile system
+
+    #[derive(Debug, Clone)]
+    struct TileData {
+        //this will be used for genrating realistic, megaman-like tile data, complete with an autotile system
         enabled: bool,
         xpos: u64,
         ypos: u64,
         #[allow(dead_code)]
-        offset_x: Option<String>,
+        offset_x: u64,
         #[allow(dead_code)]
-        offset_y: Option<String>,
+        offset_y: u64,
         tile_id: u64,
         tile: bool,
         #[allow(dead_code)]
         extra_e: Option<String>,
     }
 
-    fn calculate_tile(data: Option<&TileData>) -> TileData {
-        //taken from mega man maker, ported to rust by yours truly
-        let tst = data.unwrap();
-        let w: u64 = (tst.xpos as f32 / 16.0).round() as u64 % 2;
-        let h: u64 = (tst.ypos as f32 / 16.0).round() as u64 % 2;
-
-        let ssx = 141;
-        let ssy = 71;
-        struct Positions {
-            leftx: u64,
-            midx: u64,
-            rightx: u64,
-            cleftx: u64,
-            crightx: u64,
-            shleftx: u64,
-            shmidx: u64,
-            shrightx: u64,
-            svx: u64,
-            topy: u64,
-            midy: u64,
-            bottomy: u64,
-            ctopy: u64,
-            cbottomy: u64,
-            shtopy: u64,
-            shmidy: u64,
-            shbottomy: u64,
-            shy: u64,
-        }
-
-        let mut pos = Positions {
-            leftx: 18,
-            midx: 53,
-            rightx: 88,
-            cleftx: 123,
-            crightx: 158,
-            shleftx: 18,
-            shmidx: 53,
-            shrightx: 88,
-            svx: 123,
-            topy: 1,
-            midy: 36,
-            bottomy: 71,
-            ctopy: 106,
-            cbottomy: 141,
-            shtopy: 1,
-            shmidy: 36,
-            shbottomy: 71,
-            shy: 106,
-        };
-
-        match w {
-            0 => {
-                pos.leftx = 1;
-                pos.midx = 36;
-                pos.rightx = 71;
-                pos.cleftx = 106;
-                pos.crightx = 141;
-                pos.shleftx = 1;
-                pos.shmidx = 36;
-                pos.shrightx = 71;
-                pos.svx = 106;
-
-            },
-            1 => {
-                pos.leftx = 18;
-                pos.midx = 53;
-                pos.rightx = 88;
-                pos.cleftx = 123;
-                pos.crightx = 158;
-                pos.shleftx = 18;
-                pos.shmidx = 53;
-                pos.shrightx = 88;
-                pos.svx = 123;
-
-            },
-            _ => {}
-
-        }
-        match h {
-            0 => {
-                pos.topy = 1;
-                pos.midy = 36;
-                pos.bottomy = 71;
-                pos.ctopy = 106;
-                pos.cbottomy = 141;
-                pos.shtopy = 1;
-                pos.shmidy = 36;
-                pos.shbottomy = 71;
-                pos.shy = 106;
-
-            },
-            1 => {
-                pos.topy = 18;
-                pos.midy = 53;
-                pos.bottomy = 88;
-                pos.ctopy = 18;
-                pos.cbottomy = 53;
-                pos.shtopy = 88;
-                pos.shmidy = 123;
-                pos.shbottomy = 158;
-                pos.shy = 123;
-            },
-            _ => {}
-
-        }   
-        let tile_pos = if ml && tm {
-            (pos.leftx, pos.topy)
-        } else if ml && bm {
-            (pos.leftx, pos.bottomy)
-        } else if mr && bm {
-            (pos.rightx, pos.bottomy)
-        } else if mr && tm {
-            (pos.rightx, pos.topy)
-        } else {
-            (pos.midx, pos.midy)
-        };
-        TileData {
-            enabled: false,
-            xpos: 0,
-            ypos: 0,
-            offset_x: Some(String::from(tile_pos.0)),
-            offset_y: Some(String::from(tile_pos.1)),
-            tile_id: 0,
-            extra_e: Some(String::from("")),
-            tile: false,
-        }
-        
-    } 
-
     impl TileData {
-
-        fn autotile_prep(tiles: &TileData, data: &Vec<TileData>) {
-            let mut top_left: Option<&TileData> = None;
-            let mut top_right: Option<&TileData> = None;
-            let mut bottom_right: Option<&TileData> = None;
-            let mut bottom_left: Option<&TileData> = None;
-            let mut left: Option<&TileData> = None;
-            let mut right: Option<&TileData> = None;
-            let mut top: Option<&TileData> = None;
-            let mut bottom: Option<&TileData> = None;
-        
+        fn autotile_prep(tiles: &TileData, data: &Vec<TileData>) -> TileData {
+            let mut ml = false;
+            let mut tm = false;
+            let mut mr = false;
+            let mut bm = false;
+            let mut tl = false;
+            let mut tr = false;
+            let mut bl = false;
+            let mut br = false;
             for tile in data.iter() {
                 if let (Some(x), Some(y)) = (tiles.xpos.checked_sub(1), tiles.ypos.checked_sub(1)) {
-                    if tile.xpos == x && tile.ypos == y && tile.enabled == true && tile.tile == tiles.tile{
-                        top_left = Some(tile);
-                        
+                    if tile.xpos == x && tile.ypos == y && tile.enabled && tile.tile == tiles.tile {
+                        tm = true;
+                        ml = true;
+                        tl = true;
                     }
                 }
                 if let Some(y) = tiles.ypos.checked_sub(1) {
-                    if tile.xpos == tiles.xpos + 1 && tile.ypos == y && tile.enabled == true&& tile.tile == tiles.tile {
-                        top_right = Some(tile);
-                        
+                    if tile.xpos == tiles.xpos + 1
+                        && tile.ypos == y
+                        && tile.enabled
+                        && tile.tile == tiles.tile
+                    {
+                        mr = true;
+                        tm = true;
+                        tr = true;
                     }
                 }
-                if tile.xpos == tiles.xpos + 1 && tile.ypos == tiles.ypos + 1 && tile.enabled == true && tile.tile == tiles.tile{
-                    bottom_right = Some(tile);
-                    
+                if tile.xpos == tiles.xpos + 1
+                    && tile.ypos == tiles.ypos + 1
+                    && tile.enabled
+                    && tile.tile == tiles.tile
+                {
+                    bm = true;
+                    mr = true;
+                    br = true;
                 }
                 if let Some(x) = tiles.xpos.checked_sub(1) {
-                    if tile.xpos == x && tile.ypos == tiles.ypos + 1 && tile.enabled == true && tile.tile == tiles.tile{
-                        bottom_left = Some(tile);
-                        
+                    if tile.xpos == x
+                        && tile.ypos == tiles.ypos + 1
+                        && tile.enabled
+                        && tile.tile == tiles.tile
+                    {
+                        bm = true;
+                        ml = true;
+                        bl = true;
                     }
                 }
                 if let Some(x) = tiles.xpos.checked_sub(1) {
-                    if tile.xpos == x && tile.ypos == tiles.ypos && tile.enabled == true && tile.tile == tiles.tile{
-                        left = Some(tile);
-                        
+                    if tile.xpos == x
+                        && tile.ypos == tiles.ypos
+                        && tile.enabled
+                        && tile.tile == tiles.tile
+                    {
+                        ml = true;
                     }
                 }
-                if tile.xpos == tiles.xpos + 1 && tile.ypos == tiles.ypos && tile.enabled == true&& tile.tile == tiles.tile {
-                    right = Some(tile);
-                    
+                if tile.xpos == tiles.xpos + 1
+                    && tile.ypos == tiles.ypos
+                    && tile.enabled
+                    && tile.tile == tiles.tile
+                {
+                    mr = true;
                 }
                 if let Some(y) = tiles.ypos.checked_sub(1) {
-                    if tile.xpos == tiles.xpos && tile.ypos == y && tile.enabled == true&& tile.tile == tiles.tile {
-                        top = Some(tile);
-                        
+                    if tile.xpos == tiles.xpos
+                        && tile.ypos == y
+                        && tile.enabled
+                        && tile.tile == tiles.tile
+                    {
+                        tm = true;
                     }
                 }
-                if tile.xpos == tiles.xpos && tile.ypos == tiles.ypos + 1 && tile.enabled == true && tile.tile == tiles.tile{
-                    bottom = Some(tile);
-                    
+                if tile.xpos == tiles.xpos
+                    && tile.ypos == tiles.ypos + 1
+                    && tile.enabled
+                    && tile.tile == tiles.tile
+                {
+                    bm = true;
                 }
-                let top_left_tile = calculate_tile(top_left);
-                let top_right_tile = calculate_tile(top_right);
-                let bottom_left_tile = calculate_tile(bottom_left);
-                let bottom_right_tile = calculate_tile(bottom_right);
-                let bottom_tile = calculate_tile(bottom);
-                let top_tile = calculate_tile(top);
-                let right_tile = calculate_tile(right);
-                let left_tile = calculate_tile(left);
+            }
+
+            let w: u64 = (tiles.xpos as f32 / 16.0).round() as u64 % 2;
+            let h: u64 = (tiles.ypos as f32 / 16.0).round() as u64 % 2;
+
+            struct Positions {
+                leftx: u64,
+                midx: u64,
+                rightx: u64,
+                cleftx: u64,
+                crightx: u64,
+                shleftx: u64,
+                shmidx: u64,
+                shrightx: u64,
+                svx: u64,
+                topy: u64,
+                midy: u64,
+                bottomy: u64,
+                ctopy: u64,
+                cbottomy: u64,
+                shtopy: u64,
+                shmidy: u64,
+                shbottomy: u64,
+                shy: u64,
+            }
+
+            let mut pos = Positions {
+                leftx: 18,
+                midx: 53,
+                rightx: 88,
+                cleftx: 123,
+                crightx: 158,
+                shleftx: 18,
+                shmidx: 53,
+                shrightx: 88,
+                svx: 123,
+                topy: 1,
+                midy: 36,
+                bottomy: 71,
+                ctopy: 106,
+                cbottomy: 141,
+                shtopy: 1,
+                shmidy: 36,
+                shbottomy: 71,
+                shy: 106,
+            };
+
+            match w {
+                0 => {
+                    pos.leftx = 1;
+                    pos.midx = 36;
+                    pos.rightx = 71;
+                    pos.cleftx = 106;
+                    pos.crightx = 141;
+                    pos.shleftx = 1;
+                    pos.shmidx = 36;
+                    pos.shrightx = 71;
+                    pos.svx = 106;
+                }
+                1 => {
+                    pos.leftx = 18;
+                    pos.midx = 53;
+                    pos.rightx = 88;
+                    pos.cleftx = 123;
+                    pos.crightx = 158;
+                    pos.shleftx = 18;
+                    pos.shmidx = 53;
+                    pos.shrightx = 88;
+                    pos.svx = 123;
+                }
+                _ => {}
+            }
+            match h {
+                0 => {
+                    pos.topy = 1;
+                    pos.midy = 36;
+                    pos.bottomy = 71;
+                    pos.ctopy = 106;
+                    pos.cbottomy = 141;
+                    pos.shtopy = 1;
+                    pos.shmidy = 36;
+                    pos.shbottomy = 71;
+                    pos.shy = 106;
+                }
+                1 => {
+                    pos.topy = 18;
+                    pos.midy = 53;
+                    pos.bottomy = 88;
+                    pos.ctopy = 18;
+                    pos.cbottomy = 53;
+                    pos.shtopy = 88;
+                    pos.shmidy = 123;
+                    pos.shbottomy = 158;
+                    pos.shy = 123;
+                }
+                _ => {}
+            }
+
+            let tile_pos: (u64, u64) = match (tl, tm, tr, ml, mr, bl, bm, br) {
+                (true, true, true, true, true, true, true, true) => (pos.midx, pos.midy), //center
+                (true, true, false, true, false, true, true, false) => (pos.midx, pos.topy), //topcenter
+                (true, false, true, true, true, true, false, true) => (pos.rightx, pos.midy), //rightcenter
+                (false, true, true, true, true, false, true, true) => (pos.leftx, pos.midy), //leftcenter
+                (true, true, false, false, true, true, false, true) => (pos.midx, pos.topy), //topright
+                (false, true, true, true, false, true, true, false) => (pos.leftx, pos.bottomy), //bottomleft
+                (false, true, true, false, true, true, true, true) => (pos.rightx, pos.bottomy), // bottomright
+                (true, false, false, true, false, true, false, true) => (pos.rightx, pos.topy), //topright corner
+                (false, true, false, true, false, true, false, true) => (pos.leftx, pos.topy), //topleft corner
+                _ => (pos.midx, pos.midy),
+            };
+            println!("{}, {}", tile_pos.0, tile_pos.1);
+            TileData {
+                enabled: true,
+                xpos: tiles.xpos,
+                ypos: tiles.ypos,
+                offset_x: tile_pos.0,
+                offset_y: tile_pos.1,
+                tile_id: tiles.tile_id,
+                extra_e: Some(String::from("")),
+
+                tile: true,
             }
         }
-        
-
     }
     struct Rules {
         use_ceilings: Vec<bool>, //a u8-carrying vector which essentially tracks
@@ -227,233 +234,446 @@ pub mod tradhandle {
         limit_bosstype: bool, //limits robot masters to rm levels and fort bosses (save for the darkmen) to fort levels.
         //dark man 3 and dark man 4 aren't affected by this variable due to being fort bosses that act like rms.
         limit_bosses: bool, //will likely not be in initial release. when true will allow multiple bosses in 1 level.
-        bossentrance: bool, //is there a coridoor before the boss? 
+        bossentrance: bool, //is there a coridoor before the boss?
     }
-    
-    fn handle_weapon(mut text: String) -> String { //weapon system
+
+    fn handle_weapon(mut text: String) -> String {
+        //weapon system
         //will force a weapon onto slot zero because 90% of the levels i generated didnt have the player have a default wpn
         let dfwpn_rng: u64 = rand::thread_rng().gen_range(0..105);
-        text = format!("{}\"{}\"", format!("{}\n1k{}=",text,0), dfwpn_rng);
+        text = format!("{}\"{}\"", format!("{}\n1k{}=", text, 0), dfwpn_rng);
         for i in 1..12 {
             let vartouse: u64 = rand::thread_rng().gen_range(0..25);
             if vartouse <= 10 {
-                text = format!("{}\"{}\"", format!("{}\n1k{}=",text,i), -1);
+                text = format!("{}\"{}\"", format!("{}\n1k{}=", text, i), -1);
             } else {
                 let rand_num: u64 = rand::thread_rng().gen_range(0..105);
-                text = format!("{}\"{}\"", format!("{}\n1k{}=",text,i), rand_num);
+                text = format!("{}\"{}\"", format!("{}\n1k{}=", text, i), rand_num);
             }
         }
         text
     }
 
-    fn handle_music(mut text: String) -> String { //selects a level song
+    fn handle_music(mut text: String) -> String {
+        //selects a level song
         let mut category: u64 = rand::thread_rng().gen_range(0..10);
         loop {
-            
             if category == 11 || category == 12 {
                 category = rand::thread_rng().gen_range(0..10);
                 continue;
-            }
-            else {
+            } else {
                 let song: u64 = rand::thread_rng().gen_range(0..7);
-                text = format!("{}1l=\"{}\"\n1m=\"{}\"",text,category,song);
+                text = format!("{}1l=\"{}\"\n1m=\"{}\"", text, category, song);
                 break;
-
             }
-
         }
-        
 
         text
     }
 
-    fn handle_tiling(mut text: String, level_length: i64, transpoints: Vec<i64>,rules: Rules) -> (String, Vec<TileData>) { //adds tiles
+    fn handle_tiling(
+        mut text: String,
+        level_length: i64,
+        transpoints: Vec<i64>,
+        rules: Rules,
+    ) -> (String, Vec<TileData>) {
+        //adds tiles
         let mut pointchecker = 0;
         let mut screeny = 0;
         let tile_id: u64 = rand::thread_rng().gen_range(0..1315);
-        let mut vecheight = Vec::new();  
+        let mut vecheight = Vec::new();
         #[allow(unused_assignments)]
         let mut height = rand::thread_rng().gen_range(1..13);
         let mut counter = 0;
-        
+        let arena_ceiling = rand::thread_rng().gen_range(0..4);
         for i in 0..level_length / 16 {
             match rules.fortress_arena {
                 false => {
-                for j in 0..224/16 {
-                        println!("{},{}",i*16,j*16);
-                        vecheight.push(TileData {
-                            enabled: true,
-                            xpos: (i * 16) as u64,
-                            ypos: (screeny)+ (j*16),
-                            offset_x: Some(String::from("1")),
-                            offset_y: Some(String::from("1")),
-                            tile_id: tile_id,
-                            extra_e: Some(format!("{}",tile_id)),
-                            tile: true,
-                        });
-                        counter+=1;
-                        /*
-                        text = format!(
-                            "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                            text, i * 16, (screeny)+ j * 16, i * 16, (screeny)+ j * 16, tile_id,
-                            i * 16, (screeny)+ j * 16, i * 16, (screeny)+j * 16, i * 16, (screeny)+j * 16
-                        );
-                        */
-                        if pointchecker < transpoints.len() &&i * 16 == transpoints[pointchecker] {
-                            screeny+=224;
-                            pointchecker+=1;
-                            println!("{screeny}");
-                            for y in 0..14 {
-                                for x in 0..16 {
-                                    vecheight.push(TileData {
-                                        enabled: true,
-                                        xpos: (x*16)+(i * 16) as u64,
-                                        ypos: (screeny-224)+ (y*16),
-                                        offset_x: Some(String::from("1")),
-                                        offset_y: Some(String::from("1")),
-                                        tile_id: tile_id,
-                                        extra_e: Some(format!("{}",tile_id)),
-                                        tile: true,
-                                    });
-                                    counter+=1;
-                                    /*
-                                    text = format!(
-                                        "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                                        text, (x*16)+(i * 16), (screeny-224)+ (y*16), (x*16)+(i * 16), (screeny-224)+ (y*16), tile_id,
-                                        (x*16)+(i * 16), (screeny-224)+ (y*16), (x*16)+(i * 16), (screeny-224)+(y*16),(x*16)+(i * 16), (screeny-224)
-                                    );
-                                    */
+                    if i >= ((level_length - 256) / 16) {
+                        for j in 0..14 {
+                            if j < arena_ceiling {
+                                vecheight.push(TileData {
+                                    enabled: true,
+                                    xpos: (i * 16) as u64,
+                                    ypos: screeny + (j * 16),
+                                    offset_x: 1,
+                                    offset_y: 1,
+                                    tile_id: tile_id,
+                                    extra_e: Some(format!("{}", tile_id)),
+                                    tile: true,
+                                });
+                                counter += 1;
+                            }
+                            if i == ((level_length-256)/16) || i == ((level_length)/16)-1{
+                                vecheight.push(TileData {
+                                    enabled: true,
+                                    xpos: (i * 16) as u64,
+                                    ypos: screeny+(j*16),
+                                    offset_x: 1,
+                                    offset_y: 1,
+                                    tile_id: tile_id,
+                                    extra_e: Some(format!("{}", tile_id)),
+                                    tile: true,
+                                });
+                                counter += 1;
+                                
+                            }
+                            vecheight.push(TileData {
+                                enabled: true,
+                                xpos: (i * 16) as u64,
+                                ypos: screeny + 224 - 16,
+                                offset_x: 1,
+                                offset_y: 1,
+                                tile_id: tile_id,
+                                extra_e: Some(format!("{}", tile_id)),
+                                tile: true,
+                            });
+                            counter += 1;
+                            
+                        }
+                    } else {
+                        for j in 0..224 / 16 {
+                            println!("{},{}", i * 16, j * 16);
+                            vecheight.push(TileData {
+                                enabled: true,
+                                xpos: (i * 16) as u64,
+                                ypos: (screeny) + (j * 16),
+                                offset_x: 1,
+                                offset_y: 1,
+                                tile_id: tile_id,
+                                extra_e: Some(format!("{}", tile_id)),
+                                tile: true,
+                            });
+                            counter += 1;
 
+                            if pointchecker < transpoints.len()
+                                && i * 16 == transpoints[pointchecker]
+                            {
+                                screeny += 224;
+                                pointchecker += 1;
+                                println!("{screeny}");
+                                for y in 0..14 {
+                                    for x in 0..16 {
+                                        vecheight.push(TileData {
+                                            enabled: true,
+                                            xpos: (x * 16) + (i * 16) as u64,
+                                            ypos: (screeny - 224) + (y * 16),
+                                            offset_x: 1,
+                                            offset_y: 1,
+                                            tile_id: tile_id,
+                                            extra_e: Some(format!("{}", tile_id)),
+                                            tile: true,
+                                        });
+                                        counter += 1;
+                                    }
                                 }
                             }
                         }
                     }
                 }
                 true => {
-                    if i >= ((level_length-256)/16) {
+                    if i >= ((level_length - 256) / 16) {
                         vecheight.push(TileData {
                             enabled: true,
                             xpos: (i * 16) as u64,
-                            ypos: screeny + 224-16,
-                            offset_x: Some(String::from("1")),
-                            offset_y: Some(String::from("1")),
+                            ypos: screeny + 224 - 16,
+                            offset_x: 1,
+                            offset_y: 1,
                             tile_id: tile_id,
-                            extra_e: Some(format!("{}",tile_id)),
+                            extra_e: Some(format!("{}", tile_id)),
                             tile: true,
                         });
-                        counter+=1;
-                    }
-                    else {
-                        for j in 0..224/16 {
-                            println!("{},{}",i*16,j*16);
+                        counter += 1;
+                    } else {
+                        for j in 0..224 / 16 {
+                            println!("{},{}", i * 16, j * 16);
                             vecheight.push(TileData {
                                 enabled: true,
                                 xpos: (i * 16) as u64,
-                                ypos: (screeny)+ (j*16),
-                                offset_x: Some(String::from("1")),
-                                offset_y: Some(String::from("1")),
+                                ypos: (screeny) + (j * 16),
+                                offset_x: 1,
+                                offset_y: 1,
                                 tile_id: tile_id,
-                                extra_e: Some(format!("{}",tile_id)),
+                                extra_e: Some(format!("{}", tile_id)),
                                 tile: true,
                             });
-                            counter+=1;
-                            if pointchecker < transpoints.len() && i * 16 == transpoints[pointchecker] {
-                                screeny+=224;
-                                pointchecker+=1;
+                            counter += 1;
+                            if pointchecker < transpoints.len()
+                                && i * 16 == transpoints[pointchecker]
+                            {
+                                screeny += 224;
+                                pointchecker += 1;
                                 println!("{screeny}");
                                 for y in 0..14 {
                                     for x in 0..16 {
                                         vecheight.push(TileData {
                                             enabled: true,
-                                            xpos: (x*16)+(i * 16) as u64,
-                                            ypos: (screeny-224)+ (y*16),
-                                            offset_x: Some(String::from("1")),
-                                            offset_y: Some(String::from("1")),
+                                            xpos: (x * 16) + (i * 16) as u64,
+                                            ypos: (screeny - 224) + (y * 16),
+                                            offset_x: 1,
+                                            offset_y: 1,
                                             tile_id: tile_id,
-                                            extra_e: Some(format!("{}",tile_id)),
+                                            extra_e: Some(format!("{}", tile_id)),
                                             tile: true,
                                         });
-                                        counter+=1;
+                                        counter += 1;
                                     }
                                 }
                             }
                         }
-
                     }
-
                 }
-                
                 _ => {
                     panic!("failed to get fortress arena info");
-
                 }
             }
-                
         }
-        print!("{}",level_length/16);
-        (text, vecheight)  
-        }
+        print!("{}", level_length / 16);
+        (text, vecheight)
+    }
 
-    fn handle_abilities(mut text: String) -> String { //changes default level abilities
+    fn handle_abilities(mut text: String) -> String {
+        //changes default level abilities
         let can_charge; //can megaman charge buster?
         let can_charge_rng = rand::thread_rng().gen_range(0..4);
-        if can_charge_rng == 4 {can_charge = 0;}
-        else {
+        if can_charge_rng == 4 {
+            can_charge = 0;
+        } else {
             can_charge = 1;
         }
         let charge_rng = rand::thread_rng().gen_range(4..6); //what charge shot will megaman use?
         let slide_rng = rand::thread_rng().gen_range(0..5); //can megaman slide?
-        text = format!("{}\n1b=\"{}\"\n1c=\"{}\"\n1d=\"{}\"\n",text,slide_rng,can_charge,charge_rng); //mega's abilities
+        text = format!(
+            "{}\n1b=\"{}\"\n1c=\"{}\"\n1d=\"{}\"\n",
+            text, slide_rng, can_charge, charge_rng
+        ); //mega's abilities
 
         let can_strike; //can protoman use proto strike (all shots are charge shots)
-        let can_strike_rng = rand::thread_rng().gen_range(0..4); 
-        if can_strike_rng == 4 {can_strike = 0;}
-        else {
+        let can_strike_rng = rand::thread_rng().gen_range(0..4);
+        if can_strike_rng == 4 {
+            can_strike = 0;
+        } else {
             can_strike = 1;
         }
         let dd_rng = rand::thread_rng().gen_range(0..1); //does proto man take double damage?
         let dj_rng = rand::thread_rng().gen_range(0..1); //can bass double jump?
         let dr_rng = rand::thread_rng().gen_range(0..1); //can roll dodge roll?
         let cb_rng = rand::thread_rng().gen_range(0..1); //can roll charge her broom?
-        text = format!("{}1ba=\"{}\"\n1ca=\"{}\"\n1bb=\"{}\"\n1cb=\"{}\"\n1cc=\"{}\"\n",text,dd_rng,can_strike,dj_rng,dr_rng,cb_rng); //proto and bass's abilities
-        
+        text = format!(
+            "{}1ba=\"{}\"\n1ca=\"{}\"\n1bb=\"{}\"\n1cb=\"{}\"\n1cc=\"{}\"\n",
+            text, dd_rng, can_strike, dj_rng, dr_rng, cb_rng
+        ); //proto and bass's abilities
+
         text
     }
     pub fn file_write() {
         let bgcount = rand::thread_rng().gen_range(0..732);
-        let length: i64 = rand::thread_rng().gen_range(1..50)*256;
+        let length: i64 = rand::thread_rng().gen_range(1..50) * 256;
         //screen trans
         let mut transpoints = Vec::new();
-        for c in 0..length/256 {
-            
+        for c in 0..length / 256 {
             let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
-            if transition == true && c * 256 != length-256{
-                
-                transpoints.push(c*256);
-            
-                
+            if transition == true && c * 256 != length - 256 {
+                transpoints.push(c * 256);
             }
         }
         let mut pointchecker = 0;
         let mut screeny = 0;
 
         //naming
-        let fortress = rand::thread_rng().gen_bool(1.0/3.0);
-        let names = Vec::from(["remastered","cut man","intro stage","level pack", "kaizo", "1-5", "protovania", "2023 revamped","roll","tutorial","wily stage","6","woman","man","mega man 12", "mega man 13", "mega man 10", "enker", "GB", "NES", "remake","challenge", "recreated", "recreation","demake","7","8","boss rush","crystal gate","{rand::thread_rng().gen_range(1..21)}","kazoo","kiazo","fangame","yellow devil","nico evaluates","rockman and forte","the sequel","1_8_0","1_7_5","1_6_0","puzzle","neo cutman","contest","i wanna kill megaman","force beam","gimmick","contraption","illegal","factory","cutmna","hardman","concept", "mega man x","zero","mega man maker x","community maker","fortnite","joe biden","strike man","megaman","protoman","bass","roll","super hard","impossible","worlds hardest","easy","traditional","megaman 2","magnet","pluto","saturn","stardroid","battan","cossack","stage","airship","fire base","dark man","4","3","2","1","big pets","Ryu","sea",
-    "v2","v3","v4","passage","entrance","skull","castle","gun","nrs","vui","feeber","example level","prontoman","mega man","rockman","electro guard","speedrun","tech","glitch","what","a","leafshield","bielles","mmmx","modded","wow","hard","ez","meka snack","go fast","apology level","b.dash","vs","the level","ultimate edition","deluxe edition","and bass","dark man 5","fortress","castle","cut","intro","stage","12","13","i","wanna","kill","guard","if it was good","improvement","halloween","christmas","walk","finish","line","death","temple","DWN","dead","man","e","ballade","punk","gate","spam","burner man","big fish","stage","pronto man","heat ladder","quint","sunstar","palace","megamix","bpss","cossack","wily","steam man","meme","dead","bals"]);
+        let fortress = rand::thread_rng().gen_bool(1.0 / 3.0);
+        let names = Vec::from([
+            "remastered",
+            "cut man",
+            "intro stage",
+            "level pack",
+            "kaizo",
+            "1-5",
+            "protovania",
+            "2023 revamped",
+            "roll",
+            "tutorial",
+            "wily stage",
+            "6",
+            "woman",
+            "man",
+            "mega man 12",
+            "mega man 13",
+            "mega man 10",
+            "enker",
+            "GB",
+            "NES",
+            "remake",
+            "challenge",
+            "recreated",
+            "recreation",
+            "demake",
+            "7",
+            "8",
+            "boss rush",
+            "crystal gate",
+            "{rand::thread_rng().gen_range(1..21)}",
+            "kazoo",
+            "kiazo",
+            "fangame",
+            "yellow devil",
+            "nico evaluates",
+            "rockman and forte",
+            "the sequel",
+            "1_8_0",
+            "1_7_5",
+            "1_6_0",
+            "puzzle",
+            "neo cutman",
+            "contest",
+            "i wanna kill megaman",
+            "force beam",
+            "gimmick",
+            "contraption",
+            "illegal",
+            "factory",
+            "cutmna",
+            "hardman",
+            "concept",
+            "x",
+            "zero",
+            "mega man maker x",
+            "community",
+            "fortnite",
+            "joe biden",
+            "strike man",
+            "megaman",
+            "protoman",
+            "bass",
+            "roll",
+            "super hard",
+            "impossible",
+            "worlds hardest",
+            "easy",
+            "traditional",
+            "megaman 2",
+            "magnet",
+            "pluto",
+            "saturn",
+            "stardroid",
+            "battan",
+            "cossack",
+            "stage",
+            "airship",
+            "fire base",
+            "dark man",
+            "4",
+            "3",
+            "2",
+            "1",
+            "big pets",
+            "Ryu",
+            "sea",
+            "v2",
+            "v3",
+            "v4",
+            "passage",
+            "entrance",
+            "skull",
+            "castle",
+            "gun",
+            "nrs",
+            "vui",
+            "feeber",
+            "example level",
+            "prontoman",
+            "mega man",
+            "rockman",
+            "electro guard",
+            "speedrun",
+            "tech",
+            "glitch",
+            "what",
+            "a",
+            "leafshield",
+            "bielles",
+            "mmmx",
+            "modded",
+            "wow",
+            "hard",
+            "ez",
+            "meka snack",
+            "go fast",
+            "apology level",
+            "b dash",
+            "vs",
+            "the level",
+            "ultimate edition",
+            "deluxe edition",
+            "and bass",
+            "dark man 5",
+            "fortress",
+            "castle",
+            "cut",
+            "intro",
+            "stage",
+            "12",
+            "13",
+            "i",
+            "wanna",
+            "kill",
+            "guard",
+            "if it was good",
+            "improvement",
+            "halloween",
+            "christmas",
+            "walk",
+            "finish",
+            "line",
+            "death",
+            "temple",
+            "DWN",
+            "dead",
+            "man",
+            "e",
+            "ballade",
+            "punk",
+            "gate",
+            "spam",
+            "burner",
+            "big fish",
+            "stage",
+            "pronto",
+            "heat ladder",
+            "quint",
+            "sunstar",
+            "palace",
+            "megamix",
+            "bpss",
+            "cossack",
+            "wily",
+            "steam",
+            "meme",
+            "dead",
+            "bals",
+        ]);
         let mut name = String::new();
-        
+
         if fortress == true {
-            name = format!("Mega Man {} - {}s Fortress Stage {}",names[rand::thread_rng().gen_range(1..names.len()-1)],names[rand::thread_rng().gen_range(1..names.len()-1)],thread_rng().gen_range(0..70));
-        }
-        else {
-            let female = rand::thread_rng().gen_bool(1.0/4.0);
+            name = format!(
+                "Mega Man {} - {}s Fortress Stage {}",
+                names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                thread_rng().gen_range(0..70) //picks a random number from 1 to 69. not 70, that's unfunny.
+            );
+        } else {
+            let female = rand::thread_rng().gen_bool(1.0 / 4.0); //gender decider
             let mut fstring = String::from("Man");
             if female == true {
                 fstring = String::from("Woman");
             }
-            
-            name = format!("Mega Man {} - {} {}s Stage",names[rand::thread_rng().gen_range(1..names.len()-1)],names[rand::thread_rng().gen_range(1..names.len()-1)],fstring);
+
+            name = format!(
+                "Mega Man {} - {} {}s Stage",
+                names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                fstring
+            );
         }
 
         let mut rule = Rules {
@@ -466,9 +686,8 @@ pub mod tradhandle {
             bossentrance: fortress,
         };
         for t in 0..transpoints.len() {
-            rule.use_ceilings.push(thread_rng().gen_bool(1.0/2.0));
+            rule.use_ceilings.push(thread_rng().gen_bool(1.0 / 2.0));
             rule.use_celings_height.push(thread_rng().gen_range(1..5));
-            
         }
         rule.limit_bosses = true;
         rule.fortress_arena = fortress;
@@ -481,7 +700,7 @@ pub mod tradhandle {
         //general things
         let mugshot = rand::thread_rng().gen_range(1..41); //boss mugshot id
         contents = format!("{}\n0v=\"1.8.5.2\"\n1a=\"{}\"\n4a=\"MMMRNG\"\n4b=\"{}\"\n0a=\"000000\"\n1p=\"0\"\n1q=\"{}\"\n1r=\"0\"\n1s=\"4480\"\n1bc=\"1\"\n1f=\"{}\"\n1e=\"{}\"\n", contents,name,rand::thread_rng().gen_range(0..161),length,mugshot,rand::thread_rng().gen_range(0..51)); //adds general level info
-        //musica
+                                                                                                                                                                                                                                                                                            //musica
         let binding = handle_music(contents.clone());
         contents = binding;
         //player abilities
@@ -489,50 +708,70 @@ pub mod tradhandle {
         contents = binding;
 
         //activate sections and add backgrounds
-        for i in -1..length/256 {
-            
+        for i in -1..length / 256 {
             if pointchecker < transpoints.len() {
-                if i-1 == transpoints[pointchecker]/256 {
+                if i - 1 == transpoints[pointchecker] / 256 {
                     if i != -1 {
-                        screeny+=224;
-                        pointchecker+=1;
-                        contents = format!("{}2a{},{}=\"1\"\n",contents,(i-1)*256,screeny);
+                        screeny += 224;
+                        pointchecker += 1;
+                        contents = format!("{}2a{},{}=\"1\"\n", contents, (i - 1) * 256, screeny);
                         //add bg
-                        
-                        contents = format!("{}2d{},{}=\"{}\"\n",contents,(i-1)*256,screeny,bgcount);
-                        println!("{screeny}");
-                    }
-                    else {
-                        screeny+=224;
-                        pointchecker+=1;
-                        contents = format!("{}2a{},{}=\"1\"\n",contents,(i)*256,screeny);
-                        //add bg
-                        
-                        contents = format!("{}2d{},{}=\"{}\"\n",contents,i*256,screeny,bgcount);
-                        println!("{screeny}");
 
+                        contents = format!(
+                            "{}2d{},{}=\"{}\"\n",
+                            contents,
+                            (i - 1) * 256,
+                            screeny,
+                            bgcount
+                        );
+                        println!("{screeny}");
+                    } else {
+                        screeny += 224;
+                        pointchecker += 1;
+                        contents = format!("{}2a{},{}=\"1\"\n", contents, (i) * 256, screeny);
+                        //add bg
+
+                        contents =
+                            format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
+                        println!("{screeny}");
                     }
                 }
             }
             if i != -1 {
-                contents = format!("{}2a{},{}=\"1\"\n",contents,i*256,screeny);
+                contents = format!("{}2a{},{}=\"1\"\n", contents, i * 256, screeny);
                 //add bg
-                contents = format!("{}2d{},{}=\"{}\"\n",contents,i*256,screeny,bgcount);
-                println!("section at {},{} activated.",i*256,screeny);
+                contents = format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
+                println!("section at {},{} activated.", i * 256, screeny);
             }
         }
 
-        //TILING!!!!!!!!!!! 
-        let binding = handle_tiling(contents.clone(),length,transpoints.clone(),rule);
+        //TILING!!!!!!!!!!!
+        let binding = handle_tiling(contents.clone(), length, transpoints.clone(), rule);
         contents = binding.0;
-        let vecheights: Vec<TileData> = binding.1;
+        let mut vecheights: Vec<TileData> = binding.1;
+
+        //auto tiling
+        for i in 0..vecheights.len() {
+            vecheights[i] = TileData::autotile_prep(&vecheights[i].clone(), &vecheights);
+        }
         for i in 0..vecheights.len() {
             contents = format!(
-                "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                contents, vecheights[i].xpos, vecheights[i].ypos, vecheights[i].xpos, vecheights[i].ypos, vecheights[i].tile_id,
-                vecheights[i].xpos, vecheights[i].ypos, vecheights[i].xpos, vecheights[i].ypos, vecheights[i].xpos, vecheights[i].ypos
+                "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"{}\"\nk{},{}=\"{}\"\n",
+                contents,
+                vecheights[i].xpos,
+                vecheights[i].ypos,
+                vecheights[i].xpos,
+                vecheights[i].ypos,
+                vecheights[i].tile_id,
+                vecheights[i].xpos,
+                vecheights[i].ypos,
+                vecheights[i].xpos,
+                vecheights[i].ypos,
+                vecheights[i].offset_x,
+                vecheights[i].xpos,
+                vecheights[i].ypos,
+                vecheights[i].offset_y
             );
-
         }
         let objpoints = transpoints.clone();
 
@@ -546,24 +785,29 @@ pub mod tradhandle {
         let mut bossid;
         loop {
             bossid = rand::thread_rng().gen_range(1..68);
-            if bossid != 33 && bossid != 0 && bossid != 34 && bossid != 1 && bossid != 55 && bossid != 56 && bossid != 9 &&  bossid != 57 && bossid != 68 && bossid != 36 && bossid != 59 && bossid != 60 { //disables boss suppressor, boss doors, and kamegoro generators as they softlock the player and arent bosses anyways. also disables boobeam trap and gemini man to prevent crashes
+            if bossid != 33
+                && bossid != 0
+                && bossid != 34
+                && bossid != 1
+                && bossid != 55
+                && bossid != 56
+                && bossid != 9
+                && bossid != 57
+                && bossid != 68
+                && bossid != 36
+                && bossid != 59
+                && bossid != 60
+            {
+                //disables boss suppressor, boss doors, and kamegoro generators as they softlock the player and arent bosses anyways. also disables boobeam trap and gemini man to prevent crashes
                 break;
-
-            }
-            else {
+            } else {
                 continue;
-
             }
         }
         //let binding  = handle_boss(contents.clone(),bossid,vecheights.clone(),length.clone(),transpoints.clone());
         //contents = binding;
 
-        //auto tiling
-        for i in 0..vecheights.len() {
-            TileData::autotile_prep(&vecheights[i].clone(),&vecheights);
-        }
-        fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv"); //write all data to the mmlv file.
-        
+        fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv");
+        //write all data to the mmlv file.
     }
-
 }
