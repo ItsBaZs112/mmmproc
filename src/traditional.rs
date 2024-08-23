@@ -506,12 +506,12 @@ pub mod tradhandle {
         match rules.fortress_arena {
             true => {
                 bossx = level_length - 48;
-                bossy = (screeny+224) - 64;
+                bossy = (screeny+224) - 48;
 
             },
             false => {
                 bossx = level_length - 48;
-                bossy = (screeny+224) - 64;
+                bossy = (screeny+224) - 48;
 
             },
 
