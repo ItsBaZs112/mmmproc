@@ -436,6 +436,7 @@ pub mod tradhandle {
         vecheights: Vec<TileData>,
         rules: Rules,
         level_length: i64,
+        transpoints: Vec<i64>
     ) -> Vec<TileData> {
         let mut counter = 0;
         let mut v = Vec::new();
@@ -747,15 +748,14 @@ pub mod tradhandle {
 
             //activate sections and add backgrounds
             for i in -1..length / 256 {
-                if pointchecker < transpoints.len() - 2 {
+                if pointchecker < transpoints.len() {
                     if i - 1 == transpoints[pointchecker] / 256 {
                         if i != -1 {
                             screeny += 224;
                             pointchecker += 1;
-                            contents =
-                                format!("{}2a{},{}=\"1\"\n", contents, (i - 1) * 256, screeny);
+                            contents = format!("{}2a{},{}=\"1\"\n", contents, (i - 1) * 256, screeny);
                             //add bg
-
+                            
                             contents = format!(
                                 "{}2d{},{}=\"{}\"\n",
                                 contents,
@@ -763,27 +763,18 @@ pub mod tradhandle {
                                 screeny,
                                 bgcount
                             );
+                            
                             println!("{screeny}");
                         } else {
                             screeny += 224;
                             pointchecker += 1;
                             contents = format!("{}2a{},{}=\"1\"\n", contents, (i) * 256, screeny);
                             //add bg
-
+    
                             contents =
                                 format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
                             println!("{screeny}");
                         }
-                    }
-                } else {
-                    if i != -1 {
-                        screeny += 224;
-                        pointchecker += 1;
-                        contents = format!("{}2b{},{}=\"0\"", contents, (i - 1) * 256, screeny,);
-                    } else {
-                        screeny += 224;
-                        pointchecker += 1;
-                        contents = format!("{}2b{},{}=\"0\"", contents, (i) * 256, screeny,);
                     }
                 }
                 if i != -1 {
@@ -791,6 +782,10 @@ pub mod tradhandle {
                     //add bg
                     contents = format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
                     println!("section at {},{} activated.", i * 256, screeny);
+                    if i == (length/256)-256 {
+                        pointchecker += 1;
+                        contents = format!("{}2b{},{}=\"0\"", contents, (i - 1) * 256, screeny);
+                    }
                 }
             }
 
@@ -800,7 +795,7 @@ pub mod tradhandle {
             contents = binding.0;
             let mut vecheights: Vec<TileData> = binding.1;
             //terraforming
-            vecheights = handle_terraform(vecheights, rule.clone(), length);
+            vecheights = handle_terraform(vecheights, rule.clone(), length,transpoints.clone());
 
             //auto tiling
             for i in 0..vecheights.len() {
