@@ -197,9 +197,10 @@ pub mod tradhandle {
                 _ => {}
             }
 
+            /*
             let tile_pos: (u64, u64) = match (tl, tm, tr, ml, mr, bl, bm, br) {
                 (true, true, true, true, true, true, true, true) => (pos.midx, pos.midy), //center
-                (true, true, false, true, false, true, true, false) => (pos.midx, pos.topy), //topcenter
+                (true, true, false, true, false, true, true, false) => (1, 36), //topcenter
                 (true, false, true, true, true, true, false, true) => (pos.rightx, pos.midy), //rightcenter
                 (false, true, true, true, true, false, true, true) => (pos.leftx, pos.midy), //leftcenter
                 (true, true, false, false, true, true, false, true) => (pos.midx, pos.topy), //topright
@@ -207,8 +208,11 @@ pub mod tradhandle {
                 (false, true, true, false, true, true, true, true) => (pos.rightx, pos.bottomy), // bottomright
                 (true, false, false, true, false, true, false, true) => (pos.rightx, pos.topy), //topright corner
                 (false, true, false, true, false, true, false, true) => (pos.leftx, pos.topy), //topleft corner
+                (false, false, false, true, true, false, false, false) => (35,105),
                 _ => (pos.midx, pos.midy),
             };
+            */
+            let tile_pos = (pos.midx,pos.topy);
 
             TileData {
                 enabled: true,
@@ -278,7 +282,8 @@ pub mod tradhandle {
         //adds tiles
         let mut pointchecker = 0;
         let mut screeny = 0;
-        let tile_id: u64 = rand::thread_rng().gen_range(0..1315);
+        //let tile_id: u64 = rand::thread_rng().gen_range(0..1315);
+        let tile_id = 3;
         let mut vecheight = Vec::new();
         #[allow(unused_assignments)]
        
@@ -506,12 +511,12 @@ pub mod tradhandle {
         match rules.fortress_arena {
             true => {
                 bossx = level_length - 48;
-                bossy = (screeny+224) - 48;
+                bossy = (screeny+224) - 32;
 
             },
             false => {
                 bossx = level_length - 48;
-                bossy = (screeny+224) - 48;
+                bossy = (screeny+224) - 32;
 
             },
 
@@ -858,13 +863,13 @@ pub mod tradhandle {
                     //add bg
                     contents = format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
                     println!("section at {},{} activated.", i * 256, screeny);
-                    if i == (length/256)-256 {
+                    if i == (length/256)-1 {
                         pointchecker += 1;
-                        contents = format!("{}2b{},{}=\"0\"", contents, (i - 1) * 256, screeny);
+                        contents = format!("{}2b{},{}=\"0\"\n", contents, (i) * 256, screeny);
                     }
-                    if rule.bossentrance == true && i == (length/256)-256 {
+                    if rule.bossentrance == true && i == (length/256)-2 {
                         pointchecker += 1;
-                        contents = format!("{}2b{},{}=\"0\"", contents, (i) * 256, screeny);
+                        contents = format!("{}2b{},{}=\"0\"\n", contents, (i) * 256, screeny);
                     }
                 }
             }
