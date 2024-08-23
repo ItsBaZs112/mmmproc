@@ -241,17 +241,13 @@ pub mod tradhandle {
 
     fn handle_weapon(mut text: String) -> String {
         //weapon system
-        //will force a weapon onto slot zero because 90% of the levels i generated didnt have the player have a default wpn
-        let dfwpn_rng: u64 = rand::thread_rng().gen_range(0..105);
-        text = format!("{}\"{}\"", format!("{}\n1k{}=", text, 0), dfwpn_rng);
+        //will force the mega buster onto slot zero since this IS a traditional lvl
+        text = format!("{}\"{}\"", format!("{}\n1k{}=", text, 0), 0);
         for i in 1..12 {
-            let vartouse: u64 = rand::thread_rng().gen_range(0..25);
-            if vartouse <= 10 {
-                text = format!("{}\"{}\"", format!("{}\n1k{}=", text, i), -1);
-            } else {
-                let rand_num: u64 = rand::thread_rng().gen_range(0..105);
-                text = format!("{}\"{}\"", format!("{}\n1k{}=", text, i), rand_num);
-            }
+            //picks a random wpn id from versions 1.0 to 1.8.5.2, although older versions of the rng only supporterd 1.0 to 1.6.3
+            let rand_num: u64 = rand::thread_rng().gen_range(1..105); //mega buster is removed from the weapon pool, unlike classic mode
+            text = format!("{}\"{}\"", format!("{}\n1k{}=", text, i), rand_num); //unlike classic, ALL slots will be filled
+            
         }
         text
     }
@@ -274,7 +270,7 @@ pub mod tradhandle {
     }
 
     fn handle_tiling(
-        mut text: String,
+        text: String,
         level_length: i64,
         transpoints: Vec<i64>,
         rules: Rules,
@@ -285,8 +281,7 @@ pub mod tradhandle {
         let tile_id: u64 = rand::thread_rng().gen_range(0..1315);
         let mut vecheight = Vec::new();
         #[allow(unused_assignments)]
-        let mut height = rand::thread_rng().gen_range(1..13);
-        let mut counter = 0;
+       
         let arena_ceiling = rand::thread_rng().gen_range(0..4);
         for i in 0..level_length / 16 {
             match rules.fortress_arena {
@@ -304,7 +299,7 @@ pub mod tradhandle {
                                     extra_e: Some(format!("{}", tile_id)),
                                     tile: true,
                                 });
-                                counter += 1;
+                               
                             }
                             if i == ((level_length - 256) / 16) || i == ((level_length) / 16) - 1 {
                                 vecheight.push(TileData {
@@ -317,7 +312,7 @@ pub mod tradhandle {
                                     extra_e: Some(format!("{}", tile_id)),
                                     tile: true,
                                 });
-                                counter += 1;
+                               
                             }
                             vecheight.push(TileData {
                                 enabled: true,
@@ -329,7 +324,7 @@ pub mod tradhandle {
                                 extra_e: Some(format!("{}", tile_id)),
                                 tile: true,
                             });
-                            counter += 1;
+                           
                         }
                     } else {
                         for j in 0..224 / 16 {
@@ -344,7 +339,7 @@ pub mod tradhandle {
                                 extra_e: Some(format!("{}", tile_id)),
                                 tile: true,
                             });
-                            counter += 1;
+                           
 
                             if pointchecker < transpoints.len()
                                 && i * 16 == transpoints[pointchecker]
@@ -364,7 +359,7 @@ pub mod tradhandle {
                                             extra_e: Some(format!("{}", tile_id)),
                                             tile: true,
                                         });
-                                        counter += 1;
+                                      
                                     }
                                 }
                             }
@@ -383,7 +378,7 @@ pub mod tradhandle {
                             extra_e: Some(format!("{}", tile_id)),
                             tile: true,
                         });
-                        counter += 1;
+                        
                     } else {
                         for j in 0..224 / 16 {
                             println!("{},{}", i * 16, j * 16);
@@ -397,7 +392,7 @@ pub mod tradhandle {
                                 extra_e: Some(format!("{}", tile_id)),
                                 tile: true,
                             });
-                            counter += 1;
+                           
                             if pointchecker < transpoints.len()
                                 && i * 16 == transpoints[pointchecker]
                             {
@@ -416,13 +411,14 @@ pub mod tradhandle {
                                             extra_e: Some(format!("{}", tile_id)),
                                             tile: true,
                                         });
-                                        counter += 1;
+                                        
                                     }
                                 }
                             }
                         }
                     }
                 }
+                #[allow(unreachable_patterns)]
                 _ => {
                     panic!("failed to get fortress arena info");
                 }
@@ -460,10 +456,90 @@ pub mod tradhandle {
         v
     }
 
+    fn handle_boss(contents: String, bossid: u64, level_length: i64, screeny: u64, rules: Rules) -> String {
+        let sans = rand::thread_rng().gen_bool(1.0/69.0); //one in 69 chance to choose megalovania as the boss music. (text editing only feature which can be accessed by setting a boss theme id to 69)
+        let bossmusic = rand::thread_rng().gen_range(1..26);
+        let mut mus = 0;
+        match sans {
+            true => {
+                mus = 69;
+
+            }
+            false => {
+                mus = bossmusic;
+
+            }
+        }
+        let mut bossx = 0;
+        let mut bossy = 0;
+        /* 
+        The following bosses don't have 2x2 hitboxes:
+        hard man: 3x3
+        stone man: 2x3
+        charge man: 2x3
+        wind man: 3x3
+        shade/spring man: 2x3
+        astro man: 3x3
+        astro man: 3x3
+        blast man: 3x3? (i think)
+        bounce man: either 4x4, 5x5, 4x5, or 3x4
+        splash woman: 2x3
+        pirate man: 2x3
+        freeze man: 2x3
+        ALL BOOBEAM TYPES (including controller): 1x1
+
+
+        the following bosses require special aid from other gimmicks and thus cant be fought (maybe not big pets or kamegoro tho)
+        boobeam
+        kamegoro maker
+        big pets
+
+        the following bosses i have zero god damn idea what their hitbox size is:
+        wily machine 4
+        wily machine 6
+        cossack catcher
+        yellow devil
+        big pets
+        */
+        
+
+        match rules.fortress_arena {
+            true => {
+                bossx = level_length - 48;
+                bossy = (screeny+224) - 64;
+
+            },
+            false => {
+                bossx = level_length - 48;
+                bossy = (screeny+224) - 64;
+
+            },
+
+        }
+        let mut text = format!(
+            "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\n",
+            contents,
+            bossx,
+            bossy,
+            bossx,
+            bossy,
+            bossx,
+            bossy,
+            bossx,
+            bossy,
+            bossx,
+            bossy,
+            bossid
+        );
+        text = format!("{}1xc0=\"{}\"\n1yc0=\"{}\"\n1ga0=\"1\"\n1g0=\"1\"\n1ha0=\"0\"\n1h0=\"1\"\n1i0=\"0\"\n1j0=\"0\"\n1n0=\"{}\"\n1o0=\"0\"\n",text,bossx,bossy, mus);
+        println!("boss at {},{}. id is {}",bossx,bossy,bossid);
+        text
+    }
+
     fn handle_abilities(mut text: String) -> String {
         //changes default level abilities
         let can_charge; //can megaman charge buster?
-        let can_charge_rng = rand::thread_rng().gen_bool(8.0 / 10.0); //8/22: updated rng
+        let can_charge_rng = rand::thread_rng().gen_bool(8.0 / 10.0); // 8/22/24: updated rng
         if can_charge_rng == true {
             can_charge = 0;
         } else {
@@ -786,6 +862,10 @@ pub mod tradhandle {
                         pointchecker += 1;
                         contents = format!("{}2b{},{}=\"0\"", contents, (i - 1) * 256, screeny);
                     }
+                    if rule.bossentrance == true && i == (length/256)-256 {
+                        pointchecker += 1;
+                        contents = format!("{}2b{},{}=\"0\"", contents, (i) * 256, screeny);
+                    }
                 }
             }
 
@@ -832,33 +912,25 @@ pub mod tradhandle {
             let mut bossid;
             loop {
                 bossid = rand::thread_rng().gen_range(1..70);
-                if bossid != 33
-                    && bossid != 0
-                    && bossid != 34
-                    && bossid != 1
-                    && bossid != 55
-                    && bossid != 56
-                    && bossid != 9
-                    && bossid != 57
-                    && bossid != 68
-                    && bossid != 36
-                    && bossid != 59
-                    && bossid != 60
+                    if bossid != 9 && bossid != 0 && bossid != 1 && bossid != 36 && bossid <= 55
+                    
                 {
-                    //disables boss suppressor, boss doors, and kamegoro generators as they softlock the player and arent bosses anyways. also disables boobeam trap and gemini man to prevent crashes
+                    // disables fortress bosses plus supressors and stuff for testing purposes. also disables gemini man (HOPEFULLY)
                     break;
                 } else {
                     continue;
                 }
             }
-            //let binding  = handle_boss(contents.clone(),bossid,vecheights.clone(),length.clone(),transpoints.clone());
-            //contents = binding;
+            let binding  = handle_boss(contents.clone(),bossid,length.clone(),screeny.clone(), rule);
+            contents = binding;
 
+
+            //write all data to the mmlv file.
             fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv");
             if batch {
                 fs::rename("level.mmlv", format!("level{}.mmlv", counts + 1));
             }
-            //write all data to the mmlv file.
+            
         }
     }
 }
