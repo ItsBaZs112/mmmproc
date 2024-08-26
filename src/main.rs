@@ -5,7 +5,7 @@ mod traditional;
 fn main() {
     let phase = 0;
     if phase == 0 {
-        println!("WELCOME TO MMMRNG!\n Enter either \"Classic\", \"batch\", or \"Traditional\" to begin.");
+        println!("WELCOME TO MMMRNG!\n Enter either \"classic\", \"batch\", or \"traditional\" to begin.");
         loop {
             let mut input = String::new();
             io::stdin().read_line(&mut input).expect("ERROR");
@@ -21,7 +21,7 @@ fn main() {
                 traditional::tradhandle::file_write(true);
                 break;
             } else {
-                println!("Invalid input. Please enter either \"Classic\" or \"Traditional\".");
+                println!("Invalid input. Please enter either \"classic\", \"batch\" or \"traditional\".");
             }
         }
     }

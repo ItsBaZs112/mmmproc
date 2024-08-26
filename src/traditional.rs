@@ -29,16 +29,17 @@ pub mod tradhandle {
             let mut bl = false;
             let mut br = false;
             for tile in data.iter() {
-                if let (Some(x), Some(y)) = (tiles.xpos.checked_sub(1), tiles.ypos.checked_sub(1)) {
-                    if tile.xpos == x && tile.ypos == y && tile.enabled && tile.tile == tiles.tile {
+                if let (Some(x), Some(y)) = (tiles.xpos.checked_sub(16), tiles.ypos.checked_sub(16))
+                {
+                    if tile.xpos <= x && tile.ypos <= y && tile.enabled && tile.tile == tiles.tile {
                         tm = true;
                         ml = true;
                         tl = true;
                     }
                 }
-                if let Some(y) = tiles.ypos.checked_sub(1) {
-                    if tile.xpos == tiles.xpos + 1
-                        && tile.ypos == y
+                if let Some(y) = tiles.ypos.checked_sub(16) {
+                    if tile.xpos >= tiles.xpos + 16
+                        && tile.ypos <= y
                         && tile.enabled
                         && tile.tile == tiles.tile
                     {
@@ -47,8 +48,8 @@ pub mod tradhandle {
                         tr = true;
                     }
                 }
-                if tile.xpos == tiles.xpos + 1
-                    && tile.ypos == tiles.ypos + 1
+                if tile.xpos >= tiles.xpos + 16
+                    && tile.ypos >= tiles.ypos + 16
                     && tile.enabled
                     && tile.tile == tiles.tile
                 {
@@ -56,9 +57,9 @@ pub mod tradhandle {
                     mr = true;
                     br = true;
                 }
-                if let Some(x) = tiles.xpos.checked_sub(1) {
-                    if tile.xpos == x
-                        && tile.ypos == tiles.ypos + 1
+                if let Some(x)= tiles.xpos.checked_sub(16) {
+                    if tile.xpos <= x
+                        && tile.ypos >= tiles.ypos + 16
                         && tile.enabled
                         && tile.tile == tiles.tile
                     {
@@ -67,8 +68,8 @@ pub mod tradhandle {
                         bl = true;
                     }
                 }
-                if let Some(x) = tiles.xpos.checked_sub(1) {
-                    if tile.xpos == x
+                if let Some(x) = tiles.xpos.checked_sub(16) {
+                    if tile.xpos <= x
                         && tile.ypos == tiles.ypos
                         && tile.enabled
                         && tile.tile == tiles.tile
@@ -76,16 +77,16 @@ pub mod tradhandle {
                         ml = true;
                     }
                 }
-                if tile.xpos == tiles.xpos + 1
+                if tile.xpos >= tiles.xpos + 16
                     && tile.ypos == tiles.ypos
                     && tile.enabled
                     && tile.tile == tiles.tile
                 {
                     mr = true;
                 }
-                if let Some(y) = tiles.ypos.checked_sub(1) {
+                if let Some(y) = tiles.ypos.checked_sub(16) {
                     if tile.xpos == tiles.xpos
-                        && tile.ypos == y
+                        && tile.ypos <= y
                         && tile.enabled
                         && tile.tile == tiles.tile
                     {
@@ -93,7 +94,7 @@ pub mod tradhandle {
                     }
                 }
                 if tile.xpos == tiles.xpos
-                    && tile.ypos == tiles.ypos + 1
+                    && tile.ypos >= tiles.ypos + 16
                     && tile.enabled
                     && tile.tile == tiles.tile
                 {
@@ -197,10 +198,9 @@ pub mod tradhandle {
                 _ => {}
             }
 
-            /*
             let tile_pos: (u64, u64) = match (tl, tm, tr, ml, mr, bl, bm, br) {
                 (true, true, true, true, true, true, true, true) => (pos.midx, pos.midy), //center
-                (true, true, false, true, false, true, true, false) => (1, 36), //topcenter
+                (true, true, false, true, false, true, true, false) => (pos.midx, pos.midy), //topcenter
                 (true, false, true, true, true, true, false, true) => (pos.rightx, pos.midy), //rightcenter
                 (false, true, true, true, true, false, true, true) => (pos.leftx, pos.midy), //leftcenter
                 (true, true, false, false, true, true, false, true) => (pos.midx, pos.topy), //topright
@@ -208,11 +208,9 @@ pub mod tradhandle {
                 (false, true, true, false, true, true, true, true) => (pos.rightx, pos.bottomy), // bottomright
                 (true, false, false, true, false, true, false, true) => (pos.rightx, pos.topy), //topright corner
                 (false, true, false, true, false, true, false, true) => (pos.leftx, pos.topy), //topleft corner
-                (false, false, false, true, true, false, false, false) => (35,105),
-                _ => (pos.midx, pos.midy),
+                (false, false, false, false, false, false, false, false) => (171,41), //no surrounding tiles!
+                _ => (pos.midx, pos.midy), 
             };
-            */
-            let tile_pos = (pos.midx,pos.topy);
 
             TileData {
                 enabled: true,
@@ -250,8 +248,8 @@ pub mod tradhandle {
         for i in 1..12 {
             //picks a random wpn id from versions 1.0 to 1.8.5.2, although older versions of the rng only supporterd 1.0 to 1.6.3
             let rand_num: u64 = rand::thread_rng().gen_range(1..105); //mega buster is removed from the weapon pool, unlike classic mode
-            text = format!("{}\"{}\"", format!("{}\n1k{}=", text, i), rand_num); //unlike classic, ALL slots will be filled
-            
+            text = format!("{}\"{}\"", format!("{}\n1k{}=", text, i), rand_num);
+            //unlike classic, ALL slots will be filled
         }
         text
     }
@@ -282,11 +280,10 @@ pub mod tradhandle {
         //adds tiles
         let mut pointchecker = 0;
         let mut screeny = 0;
-        //let tile_id: u64 = rand::thread_rng().gen_range(0..1315);
-        let tile_id = 3;
+        let tile_id: u64 = rand::thread_rng().gen_range(0..1315);
+        //let tile_id = 3;
         let mut vecheight = Vec::new();
         #[allow(unused_assignments)]
-       
         let arena_ceiling = rand::thread_rng().gen_range(0..4);
         for i in 0..level_length / 16 {
             match rules.fortress_arena {
@@ -304,7 +301,6 @@ pub mod tradhandle {
                                     extra_e: Some(format!("{}", tile_id)),
                                     tile: true,
                                 });
-                               
                             }
                             if i == ((level_length - 256) / 16) || i == ((level_length) / 16) - 1 {
                                 vecheight.push(TileData {
@@ -317,7 +313,6 @@ pub mod tradhandle {
                                     extra_e: Some(format!("{}", tile_id)),
                                     tile: true,
                                 });
-                               
                             }
                             vecheight.push(TileData {
                                 enabled: true,
@@ -329,7 +324,6 @@ pub mod tradhandle {
                                 extra_e: Some(format!("{}", tile_id)),
                                 tile: true,
                             });
-                           
                         }
                     } else {
                         for j in 0..224 / 16 {
@@ -344,7 +338,6 @@ pub mod tradhandle {
                                 extra_e: Some(format!("{}", tile_id)),
                                 tile: true,
                             });
-                           
 
                             if pointchecker < transpoints.len()
                                 && i * 16 == transpoints[pointchecker]
@@ -364,7 +357,6 @@ pub mod tradhandle {
                                             extra_e: Some(format!("{}", tile_id)),
                                             tile: true,
                                         });
-                                      
                                     }
                                 }
                             }
@@ -383,7 +375,6 @@ pub mod tradhandle {
                             extra_e: Some(format!("{}", tile_id)),
                             tile: true,
                         });
-                        
                     } else {
                         for j in 0..224 / 16 {
                             println!("{},{}", i * 16, j * 16);
@@ -397,7 +388,7 @@ pub mod tradhandle {
                                 extra_e: Some(format!("{}", tile_id)),
                                 tile: true,
                             });
-                           
+
                             if pointchecker < transpoints.len()
                                 && i * 16 == transpoints[pointchecker]
                             {
@@ -416,7 +407,6 @@ pub mod tradhandle {
                                             extra_e: Some(format!("{}", tile_id)),
                                             tile: true,
                                         });
-                                        
                                     }
                                 }
                             }
@@ -437,7 +427,7 @@ pub mod tradhandle {
         vecheights: Vec<TileData>,
         rules: Rules,
         level_length: i64,
-        transpoints: Vec<i64>
+        transpoints: Vec<i64>,
     ) -> Vec<TileData> {
         let mut counter = 0;
         let mut v = Vec::new();
@@ -461,23 +451,27 @@ pub mod tradhandle {
         v
     }
 
-    fn handle_boss(contents: String, bossid: u64, level_length: i64, screeny: u64, rules: Rules) -> String {
-        let sans = rand::thread_rng().gen_bool(1.0/69.0); //one in 69 chance to choose megalovania as the boss music. (text editing only feature which can be accessed by setting a boss theme id to 69)
-        let bossmusic = rand::thread_rng().gen_range(1..26);
+    fn handle_boss(
+        contents: String,
+        bossid: u64,
+        level_length: i64,
+        screeny: u64,
+        rules: Rules,
+    ) -> String {
+        let sans = rand::thread_rng().gen_bool(1.0 / 69.0); //one in 69 chance to choose megalovania as the boss music. (text editing only feature which can be accessed by setting a boss theme id to 69)
+        let bossmusic = rand::thread_rng().gen_range(1..20);
         let mut mus = 0;
         match sans {
             true => {
                 mus = 69;
-
             }
             false => {
                 mus = bossmusic;
-
             }
         }
         let mut bossx = 0;
         let mut bossy = 0;
-        /* 
+        /*
         The following bosses don't have 2x2 hitboxes:
         hard man: 3x3
         stone man: 2x3
@@ -506,38 +500,23 @@ pub mod tradhandle {
         yellow devil
         big pets
         */
-        
 
         match rules.fortress_arena {
             true => {
                 bossx = level_length - 48;
-                bossy = (screeny+224) - 32;
-
-            },
+                bossy = (screeny + 224) - 32;
+            }
             false => {
                 bossx = level_length - 48;
-                bossy = (screeny+224) - 32;
-
-            },
-
+                bossy = (screeny + 224) - 32;
+            }
         }
         let mut text = format!(
             "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\n",
-            contents,
-            bossx,
-            bossy,
-            bossx,
-            bossy,
-            bossx,
-            bossy,
-            bossx,
-            bossy,
-            bossx,
-            bossy,
-            bossid
+            contents, bossx, bossy, bossx, bossy, bossx, bossy, bossx, bossy, bossx, bossy, bossid
         );
         text = format!("{}1xc0=\"{}\"\n1yc0=\"{}\"\n1ga0=\"1\"\n1g0=\"1\"\n1ha0=\"0\"\n1h0=\"1\"\n1i0=\"0\"\n1j0=\"0\"\n1n0=\"{}\"\n1o0=\"0\"\n",text,bossx,bossy, mus);
-        println!("boss at {},{}. id is {}",bossx,bossy,bossid);
+        println!("boss at {},{}. id is {}", bossx, bossy, bossid);
         text
     }
 
@@ -586,17 +565,15 @@ pub mod tradhandle {
             let length: i64 = rand::thread_rng().gen_range(17..32) * 256;
             //screen trans
             let mut transpoints = Vec::new();
-        
-            
-                for c in 0..length / 256 {
-                    let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
 
-                    if transition == true && c * 256 != length - 256 {
-                        transpoints.push(c * 256);
-                        
-                    }
+            for c in 0..length / 256 {
+                let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
+
+                if transition == true && c * 256 != length - 256 {
+                    transpoints.push(c * 256);
                 }
-            
+            }
+
             let mut pointchecker = 0;
             let mut screeny = 0;
 
@@ -834,9 +811,10 @@ pub mod tradhandle {
                         if i != -1 {
                             screeny += 224;
                             pointchecker += 1;
-                            contents = format!("{}2a{},{}=\"1\"\n", contents, (i - 1) * 256, screeny);
+                            contents =
+                                format!("{}2a{},{}=\"1\"\n", contents, (i - 1) * 256, screeny);
                             //add bg
-                            
+
                             contents = format!(
                                 "{}2d{},{}=\"{}\"\n",
                                 contents,
@@ -844,14 +822,14 @@ pub mod tradhandle {
                                 screeny,
                                 bgcount
                             );
-                            
+
                             println!("{screeny}");
                         } else {
                             screeny += 224;
                             pointchecker += 1;
                             contents = format!("{}2a{},{}=\"1\"\n", contents, (i) * 256, screeny);
                             //add bg
-    
+
                             contents =
                                 format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
                             println!("{screeny}");
@@ -862,12 +840,13 @@ pub mod tradhandle {
                     contents = format!("{}2a{},{}=\"1\"\n", contents, i * 256, screeny);
                     //add bg
                     contents = format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
+                    //lock screen on boss
                     println!("section at {},{} activated.", i * 256, screeny);
-                    if i == (length/256)-1 {
+                    if i == (length / 256) - 1 {
                         pointchecker += 1;
                         contents = format!("{}2b{},{}=\"0\"\n", contents, (i) * 256, screeny);
                     }
-                    if rule.bossentrance == true && i == (length/256)-2 {
+                    if rule.bossentrance == true && i == (length / 256) - 2 {
                         pointchecker += 1;
                         contents = format!("{}2b{},{}=\"0\"\n", contents, (i) * 256, screeny);
                     }
@@ -880,7 +859,7 @@ pub mod tradhandle {
             contents = binding.0;
             let mut vecheights: Vec<TileData> = binding.1;
             //terraforming
-            vecheights = handle_terraform(vecheights, rule.clone(), length,transpoints.clone());
+            vecheights = handle_terraform(vecheights, rule.clone(), length, transpoints.clone());
 
             //auto tiling
             for i in 0..vecheights.len() {
@@ -917,25 +896,27 @@ pub mod tradhandle {
             let mut bossid;
             loop {
                 bossid = rand::thread_rng().gen_range(1..70);
-                    if bossid != 9 && bossid != 0 && bossid != 1 && bossid != 36 && bossid <= 55
-                    
-                {
+                if bossid != 9 && bossid != 0 && bossid != 1 && bossid != 36 && bossid <= 55 {
                     // disables fortress bosses plus supressors and stuff for testing purposes. also disables gemini man (HOPEFULLY)
                     break;
                 } else {
                     continue;
                 }
             }
-            let binding  = handle_boss(contents.clone(),bossid,length.clone(),screeny.clone(), rule);
+            let binding = handle_boss(
+                contents.clone(),
+                bossid,
+                length.clone(),
+                screeny.clone(),
+                rule,
+            );
             contents = binding;
-
 
             //write all data to the mmlv file.
             fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv");
             if batch {
                 fs::rename("level.mmlv", format!("level{}.mmlv", counts + 1));
             }
-            
         }
     }
 }
