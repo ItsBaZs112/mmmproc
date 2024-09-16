@@ -24,81 +24,24 @@ pub mod tradhandle {
             let mut tm = false;
             let mut mr = false;
             let mut bm = false;
-            let mut tl = false;
-            let mut tr = false;
-            let mut bl = false;
-            let mut br = false;
             for tile in data.iter() {
-                if let (Some(x), Some(y)) = (tiles.xpos.checked_sub(16), tiles.ypos.checked_sub(16))
-                {
-                    if tile.xpos <= x && tile.ypos <= y && tile.enabled && tile.tile == tiles.tile {
-                        tm = true;
-                        ml = true;
-                        tl = true;
+                if tile.enabled {
+                    if let Some(y) = tiles.ypos.checked_sub(16) {
+                        if tile.ypos == tiles.ypos - 16 {
+                            tm = true;
+                        }
                     }
-                }
-                if let Some(y) = tiles.ypos.checked_sub(16) {
-                    if tile.xpos >= tiles.xpos + 16
-                        && tile.ypos <= y
-                        && tile.enabled
-                        && tile.tile == tiles.tile
-                    {
-                        mr = true;
-                        tm = true;
-                        tr = true;
-                    }
-                }
-                if tile.xpos >= tiles.xpos + 16
-                    && tile.ypos >= tiles.ypos + 16
-                    && tile.enabled
-                    && tile.tile == tiles.tile
-                {
-                    bm = true;
-                    mr = true;
-                    br = true;
-                }
-                if let Some(x)= tiles.xpos.checked_sub(16) {
-                    if tile.xpos <= x
-                        && tile.ypos >= tiles.ypos + 16
-                        && tile.enabled
-                        && tile.tile == tiles.tile
-                    {
+                    if tile.ypos == tiles.ypos + 16 {
                         bm = true;
-                        ml = true;
-                        bl = true;
                     }
-                }
-                if let Some(x) = tiles.xpos.checked_sub(16) {
-                    if tile.xpos <= x
-                        && tile.ypos == tiles.ypos
-                        && tile.enabled
-                        && tile.tile == tiles.tile
-                    {
-                        ml = true;
+                    if let Some(x) = tiles.xpos.checked_sub(16) {
+                        if tile.xpos == tiles.xpos - 16 {
+                            ml = true;
+                        }
                     }
-                }
-                if tile.xpos >= tiles.xpos + 16
-                    && tile.ypos == tiles.ypos
-                    && tile.enabled
-                    && tile.tile == tiles.tile
-                {
-                    mr = true;
-                }
-                if let Some(y) = tiles.ypos.checked_sub(16) {
-                    if tile.xpos == tiles.xpos
-                        && tile.ypos <= y
-                        && tile.enabled
-                        && tile.tile == tiles.tile
-                    {
-                        tm = true;
+                    if tile.xpos == tiles.xpos + 16 {
+                        mr = true;
                     }
-                }
-                if tile.xpos == tiles.xpos
-                    && tile.ypos >= tiles.ypos + 16
-                    && tile.enabled
-                    && tile.tile == tiles.tile
-                {
-                    bm = true;
                 }
             }
 
@@ -198,19 +141,35 @@ pub mod tradhandle {
                 _ => {}
             }
 
-            let tile_pos: (u64, u64) = match (tl, tm, tr, ml, mr, bl, bm, br) {
-                (true, true, true, true, true, true, true, true) => (pos.midx, pos.midy), //center
-                (true, true, false, true, false, true, true, false) => (pos.midx, pos.midy), //topcenter
-                (true, false, true, true, true, true, false, true) => (pos.rightx, pos.midy), //rightcenter
-                (false, true, true, true, true, false, true, true) => (pos.leftx, pos.midy), //leftcenter
-                (true, true, false, false, true, true, false, true) => (pos.midx, pos.topy), //topright
-                (false, true, true, true, false, true, true, false) => (pos.leftx, pos.bottomy), //bottomleft
-                (false, true, true, false, true, true, true, true) => (pos.rightx, pos.bottomy), // bottomright
-                (true, false, false, true, false, true, false, true) => (pos.rightx, pos.topy), //topright corner
-                (false, true, false, true, false, true, false, true) => (pos.leftx, pos.topy), //topleft corner
-                (false, false, false, false, false, false, false, false) => (171,41), //no surrounding tiles!
-                _ => (pos.midx, pos.midy), 
-            };
+            let mut tile_pos = (0, 0);
+            if ml && tm && mr && bm {
+                tile_pos = (pos.midx, pos.midy);
+            } else {
+                let cx = if !(ml && mr) {
+                    if mr {
+                        pos.leftx
+                    } else if ml {
+                        pos.rightx
+                    } else {
+                        141
+                    }
+                } else {
+                    pos.midx
+                };
+                //
+                let cy = if !(tm && bm) {
+                    if bm {
+                        pos.topy
+                    } else if tm {
+                        pos.bottomy
+                    } else {
+                        71
+                    }
+                } else {
+                    pos.midy
+                };
+                tile_pos = (cx, cy);
+            }
 
             TileData {
                 enabled: true,
@@ -428,13 +387,50 @@ pub mod tradhandle {
         rules: Rules,
         level_length: i64,
         transpoints: Vec<i64>,
-    ) -> Vec<TileData> {
+        noise: Vec<f64>
+    ) -> (Vec<TileData>, u64) {
         let mut counter = 0;
         let mut v = Vec::new();
-        let mut screeny = 0;
+        let mut bossentrance_y = thread_rng().gen_range(1..11) * 16;
+        let mut bosschecky = 0;
         for i in 0..vecheights.len() {
+            if vecheights[i].ypos % 208 == 0 && vecheights[i].xpos < (level_length - 256) as u64 {
+                v.push(TileData {
+                    enabled: true,
+                    xpos: vecheights[i].xpos,
+                    ypos: vecheights[i].ypos,
+                    offset_x: vecheights[i].offset_x,
+                    offset_y: vecheights[i].offset_y,
+                    tile_id: vecheights[i].tile_id,
+                    extra_e: Some(format!("{}", 0)),
+                    tile: true,
+                });
+            } else if vecheights[i].xpos >= (level_length - 256) as u64 {
+                if vecheights[i].ypos % 224 == 0 && bosschecky == 0 {
+                    bosschecky = vecheights[i].ypos;
+                }
+                if ((vecheights[i].ypos < (bosschecky + bossentrance_y) + 16)
+                    && vecheights[i].xpos <= (level_length - 256) as u64
+                    || vecheights[i].ypos > ((bosschecky + bossentrance_y) + 64)
+                        && vecheights[i].xpos <= (level_length - 256) as u64)
+                    || vecheights[i].xpos != (level_length - 256) as u64
+                {
+                    v.push(TileData {
+                        enabled: true,
+                        xpos: vecheights[i].xpos,
+                        ypos: vecheights[i].ypos,
+                        offset_x: vecheights[i].offset_x,
+                        offset_y: vecheights[i].offset_y,
+                        tile_id: vecheights[i].tile_id,
+                        extra_e: Some(format!("{}", 0)),
+                        tile: true,
+                    });
+                }
+            }
+            /*
             v.push(vecheights[counter].clone());
             println!("{:?}", vecheights[counter]);
+
             /*TileData {
                 enabled: true,
                 xpos: 0,
@@ -447,8 +443,10 @@ pub mod tradhandle {
             }
             */
             counter += 1;
+            */
         }
-        v
+        println!("{}", bosschecky);
+        (v, bosschecky)
     }
 
     fn handle_boss(
@@ -859,12 +857,30 @@ pub mod tradhandle {
             contents = binding.0;
             let mut vecheights: Vec<TileData> = binding.1;
             //terraforming
-            vecheights = handle_terraform(vecheights, rule.clone(), length, transpoints.clone());
-
-            //auto tiling
-            for i in 0..vecheights.len() {
-                vecheights[i] = TileData::autotile_prep(&vecheights[i].clone(), &vecheights);
-            }
+            
+            let binding = handle_terraform(vecheights, rule.clone(), length, transpoints.clone(),r);
+            vecheights = binding.0;
+            contents = format!(
+                "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\n",
+                contents,
+                length - 256,
+                binding.1,
+                length - 256,
+                binding.1,
+                length - 256,
+                binding.1,
+                length - 256,
+                binding.1,
+                length - 256,
+                binding.1,
+                0
+            ); //1.0 boss dor
+               //auto tiling
+               /*
+               for i in 0..vecheights.len() {
+                   vecheights[i] = TileData::autotile_prep(&vecheights[i].clone(), &vecheights);
+               }
+               */
             for i in 0..vecheights.len() {
                 contents = format!(
                     "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"{}\"\nk{},{}=\"{}\"\n",
@@ -918,5 +934,7 @@ pub mod tradhandle {
                 fs::rename("level.mmlv", format!("level{}.mmlv", counts + 1));
             }
         }
+        
     }
+    
 }
