@@ -21,7 +21,7 @@ fn main() {
                 traditional::tradhandle::file_write(true);
                 break;
             } else {
-                println!("Invalid input. Please enter either \"classic\", \"batch\" or \"traditional\".");
+                println!("Please enter either \"classic\", \"batch\" or \"traditional\".");
             }
         }
     }
