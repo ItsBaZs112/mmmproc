@@ -387,7 +387,6 @@ pub mod tradhandle {
         rules: Rules,
         level_length: i64,
         transpoints: Vec<i64>,
-        noise: Vec<f64>
     ) -> (Vec<TileData>, u64) {
         let mut counter = 0;
         let mut v = Vec::new();
@@ -858,7 +857,7 @@ pub mod tradhandle {
             let mut vecheights: Vec<TileData> = binding.1;
             //terraforming
             
-            let binding = handle_terraform(vecheights, rule.clone(), length, transpoints.clone(),r);
+            let binding = handle_terraform(vecheights, rule.clone(), length, transpoints.clone());
             vecheights = binding.0;
             contents = format!(
                 "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\n",
