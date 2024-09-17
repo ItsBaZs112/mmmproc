@@ -1,3 +1,7 @@
+#[allow(dead_code)]
+#[allow(unused_variables)]
+#[allow(unused_assignments)]
+#[allow(unused_must_use)]
 pub mod tradhandle {
     use rand::{thread_rng, Rng};
     use std::fs;
@@ -5,6 +9,7 @@ pub mod tradhandle {
     #[derive(Debug, Clone)]
     struct TileData {
         //this will be used for genrating realistic, megaman-like tile data, complete with an autotile system
+        #[allow(dead_code)]
         enabled: bool,
         xpos: u64,
         ypos: u64,
@@ -13,12 +18,16 @@ pub mod tradhandle {
         #[allow(dead_code)]
         offset_y: u64,
         tile_id: u64,
+        #[allow(dead_code)]
         tile: bool,
         #[allow(dead_code)]
         extra_e: Option<String>,
     }
 
     impl TileData {
+        #[allow(dead_code)]
+        #[allow(unused_variables)]
+        #[allow(unused_assignments)]
         fn autotile_prep(tiles: &TileData, data: &Vec<TileData>) -> TileData {
             let mut ml = false;
             let mut tm = false;
@@ -186,6 +195,7 @@ pub mod tradhandle {
     }
 
     #[derive(Debug, Clone)]
+    #[allow(dead_code)]
     struct Rules {
         use_ceilings: Vec<bool>, //a u8-carrying vector which essentially tracks
         //all values of transpoints and decides if there will be ceilings in this section.
@@ -381,7 +391,9 @@ pub mod tradhandle {
         print!("{}", level_length / 16);
         (text, vecheight)
     }
-
+    #[allow(dead_code)]
+    #[allow(unused_variables)]
+    #[allow(unused_mut)]
     fn handle_terraform(
         vecheights: Vec<TileData>,
         rules: Rules,
@@ -393,7 +405,7 @@ pub mod tradhandle {
         let mut bossentrance_y = thread_rng().gen_range(1..11) * 16;
         let mut bosschecky = 0;
         for i in 0..vecheights.len() {
-            if vecheights[i].ypos % 208 == 0 && vecheights[i].xpos < (level_length - 256) as u64 {
+            if vecheights[i].xpos < (level_length - 256) as u64 {
                 v.push(TileData {
                     enabled: true,
                     xpos: vecheights[i].xpos,
@@ -455,10 +467,10 @@ pub mod tradhandle {
         screeny: u64,
         rules: Rules,
     ) -> String {
-        let sans = rand::thread_rng().gen_bool(1.0 / 69.0); //one in 69 chance to choose megalovania as the boss music. (text editing only feature which can be accessed by setting a boss theme id to 69)
+        let holy_shit_sans_undertale = rand::thread_rng().gen_bool(1.0 / 69.0); //one in 69 chance to choose megalovania as the boss music. (text editing only feature which can be accessed by setting a boss theme id to 69)
         let bossmusic = rand::thread_rng().gen_range(1..20);
         let mut mus = 0;
-        match sans {
+        match holy_shit_sans_undertale {
             true => {
                 mus = 69;
             }
@@ -484,11 +496,11 @@ pub mod tradhandle {
         freeze man: 2x3
         ALL BOOBEAM TYPES (including controller): 1x1
 
-
         the following bosses require special aid from other gimmicks and thus cant be fought (maybe not big pets or kamegoro tho)
         boobeam
         kamegoro maker
         big pets
+        yellow devil
 
         the following bosses i have zero god damn idea what their hitbox size is:
         wily machine 4
