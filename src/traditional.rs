@@ -249,7 +249,8 @@ pub mod tradhandle {
         //adds tiles
         let mut pointchecker = 0;
         let mut screeny = 0;
-        let tile_id: u64 = rand::thread_rng().gen_range(0..1315);
+        let tile_id: u64 = 3;
+        //rand::thread_rng().gen_range(0..1);
         //let tile_id = 3;
         let mut vecheight = Vec::new();
         #[allow(unused_assignments)]
@@ -402,7 +403,7 @@ pub mod tradhandle {
     ) -> (Vec<TileData>, u64) {
         let mut counter = 0;
         let mut v = Vec::new();
-        let mut bossentrance_y = thread_rng().gen_range(1..10) * 16;
+        let mut bossentrance_y = thread_rng().gen_range(1..9) * 16;
         let mut bosschecky = 0;
         for i in 0..vecheights.len() {
             if vecheights[i].xpos < (level_length - 256) as u64 {
@@ -511,7 +512,7 @@ pub mod tradhandle {
             */
         }
         println!("{}", bosschecky);
-        (v, bosschecky)
+        (v, bosschecky+bossentrance_y)
     }
 
     fn handle_boss(
@@ -624,17 +625,20 @@ pub mod tradhandle {
             batchloop = 1;
         };
         for counts in 0..batchloop {
-            let bgcount = rand::thread_rng().gen_range(0..732);
-            let length: i64 = rand::thread_rng().gen_range(17..32) * 256;
+            let bgcount = rand::thread_rng().gen_range(0..8);
+           
+            let length: i64 = (rand::thread_rng().gen_range(9..23)) * 256;
             //screen trans
             let mut transpoints = Vec::new();
 
-            for c in 0..length / 256 {
-                let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
+                for c in 0..length / 256 {
+                    let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
 
-                if transition == true && c * 256 < length - 512 {
-                    transpoints.push(c * 256);
-                }
+                    if transition == true && c * 256 < length - 512 {
+                        transpoints.push(c * 256);
+                    }
+
+                
             }
 
             let mut pointchecker = 0;
@@ -926,20 +930,33 @@ pub mod tradhandle {
             let binding = handle_terraform(vecheights, rule.clone(), length, transpoints.clone());
             vecheights = binding.0;
             contents = format!(
-                "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\n",
+                "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\na{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\n",
                 contents,
                 length - 256,
-                binding.1,
+                binding.1+64,
                 length - 256,
-                binding.1,
+                binding.1+64,
                 length - 256,
-                binding.1,
+                binding.1+64,
                 length - 256,
-                binding.1,
+                binding.1+64,
                 length - 256,
-                binding.1,
-                0
-            ); //1.0 boss dor
+                binding.1+64,
+                33,
+                length - 512,
+                binding.1+64,
+                length - 512,
+                binding.1+64,
+                length - 512,
+                binding.1+64,
+                length - 512,
+                binding.1+64,
+                length - 512,
+                binding.1+64,
+                33
+            ); //boss dor
+
+            
                //auto tiling
                /*
                for i in 0..vecheights.len() {
