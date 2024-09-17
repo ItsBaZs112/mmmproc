@@ -402,20 +402,74 @@ pub mod tradhandle {
     ) -> (Vec<TileData>, u64) {
         let mut counter = 0;
         let mut v = Vec::new();
-        let mut bossentrance_y = thread_rng().gen_range(1..11) * 16;
+        let mut bossentrance_y = thread_rng().gen_range(1..10) * 16;
         let mut bosschecky = 0;
         for i in 0..vecheights.len() {
             if vecheights[i].xpos < (level_length - 256) as u64 {
-                v.push(TileData {
-                    enabled: true,
-                    xpos: vecheights[i].xpos,
-                    ypos: vecheights[i].ypos,
-                    offset_x: vecheights[i].offset_x,
-                    offset_y: vecheights[i].offset_y,
-                    tile_id: vecheights[i].tile_id,
-                    extra_e: Some(format!("{}", 0)),
-                    tile: true,
-                });
+                if vecheights[i].xpos > (level_length-512) as u64 {
+                    if vecheights[i].ypos % 224 == 0 && bosschecky == 0 {
+                        bosschecky = vecheights[i].ypos;
+                    }
+                    let thrush = bossentrance_y+bosschecky;
+                    v.push(TileData {
+                        enabled: true,
+                        xpos: vecheights[i].xpos,
+                        ypos: thrush,
+                        offset_x: vecheights[i].offset_x,
+                        offset_y: vecheights[i].offset_y,
+                        tile_id: vecheights[i].tile_id,
+                        extra_e: Some(format!("{}", 0)),
+                        tile: true,
+                    });
+                    v.push(TileData {
+                        enabled: true,
+                        xpos: vecheights[i].xpos,
+                        ypos: thrush + 80,
+                        offset_x: vecheights[i].offset_x,
+                        offset_y: vecheights[i].offset_y,
+                        tile_id: vecheights[i].tile_id,
+                        extra_e: Some(format!("{}", 0)),
+                        tile: true,
+                    });
+                    for f in 0..bossentrance_y/16 {
+                        v.push(TileData {
+                            enabled: true,
+                            xpos: vecheights[i].xpos,
+                            ypos: bosschecky+f*16,
+                            offset_x: vecheights[i].offset_x,
+                            offset_y: vecheights[i].offset_y,
+                            tile_id: vecheights[i].tile_id,
+                            extra_e: Some(format!("{}", 0)),
+                            tile: true,
+                        });
+                        
+                    }
+                    for g in ((bossentrance_y/16)+1)+4..14 {
+                        v.push(TileData {
+                            enabled: true,
+                            xpos: vecheights[i].xpos,
+                            ypos: bosschecky+g*16,
+                            offset_x: vecheights[i].offset_x,
+                            offset_y: vecheights[i].offset_y,
+                            tile_id: vecheights[i].tile_id,
+                            extra_e: Some(format!("{}", 0)),
+                            tile: true,
+                        });
+                        
+                    }
+                }
+                else {
+                    v.push(TileData {
+                        enabled: true,
+                        xpos: vecheights[i].xpos,
+                        ypos: vecheights[i].ypos,
+                        offset_x: vecheights[i].offset_x,
+                        offset_y: vecheights[i].offset_y,
+                        tile_id: vecheights[i].tile_id,
+                        extra_e: Some(format!("{}", 0)),
+                        tile: true,
+                    });
+                }
             } else if vecheights[i].xpos >= (level_length - 256) as u64 {
                 if vecheights[i].ypos % 224 == 0 && bosschecky == 0 {
                     bosschecky = vecheights[i].ypos;
@@ -578,7 +632,7 @@ pub mod tradhandle {
             for c in 0..length / 256 {
                 let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
 
-                if transition == true && c * 256 != length - 256 {
+                if transition == true && c * 256 < length - 512 {
                     transpoints.push(c * 256);
                 }
             }
