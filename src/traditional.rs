@@ -1,3 +1,8 @@
+#[allow(dead_code)]
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused)]
 pub mod tradhandle {
     use rand::{thread_rng, Rng};
     use std::fs;
@@ -287,37 +292,14 @@ pub mod tradhandle {
                     } else {
                         for j in 0..224 / 16 {
                             println!("{},{}", i * 16, j * 16);
-                            vecheight.push(TileData {
-                                enabled: true,
-                                xpos: (i * 16) as u64,
-                                ypos: (screeny) + (j * 16),
-                                offset_x: 1,
-                                offset_y: 1,
-                                tile_id: tile_id,
-                                extra_e: Some(format!("{}", tile_id)),
-                                tile: true,
-                            });
-
+                            
                             if pointchecker < transpoints.len()
                                 && i * 16 == transpoints[pointchecker]
                             {
                                 screeny += 224;
                                 pointchecker += 1;
                                 println!("{screeny}");
-                                for y in 0..14 {
-                                    for x in 0..16 {
-                                        vecheight.push(TileData {
-                                            enabled: true,
-                                            xpos: (x * 16) + (i * 16) as u64,
-                                            ypos: (screeny - 224) + (y * 16),
-                                            offset_x: 1,
-                                            offset_y: 1,
-                                            tile_id: tile_id,
-                                            extra_e: Some(format!("{}", tile_id)),
-                                            tile: true,
-                                        });
-                                    }
-                                }
+                                
                             }
                         }
                     }
@@ -337,37 +319,14 @@ pub mod tradhandle {
                     } else {
                         for j in 0..224 / 16 {
                             println!("{},{}", i * 16, j * 16);
-                            vecheight.push(TileData {
-                                enabled: true,
-                                xpos: (i * 16) as u64,
-                                ypos: (screeny) + (j * 16),
-                                offset_x: 1,
-                                offset_y: 1,
-                                tile_id: tile_id,
-                                extra_e: Some(format!("{}", tile_id)),
-                                tile: true,
-                            });
-
+                            
                             if pointchecker < transpoints.len()
                                 && i * 16 == transpoints[pointchecker]
                             {
                                 screeny += 224;
                                 pointchecker += 1;
                                 println!("{screeny}");
-                                for y in 0..14 {
-                                    for x in 0..16 {
-                                        vecheight.push(TileData {
-                                            enabled: true,
-                                            xpos: (x * 16) + (i * 16) as u64,
-                                            ypos: (screeny - 224) + (y * 16),
-                                            offset_x: 1,
-                                            offset_y: 1,
-                                            tile_id: tile_id,
-                                            extra_e: Some(format!("{}", tile_id)),
-                                            tile: true,
-                                        });
-                                    }
-                                }
+                                
                             }
                         }
                     }
@@ -387,14 +346,14 @@ pub mod tradhandle {
         rules: Rules,
         level_length: i64,
         transpoints: Vec<i64>,
-        noise: Vec<f64>
+        
     ) -> (Vec<TileData>, u64) {
         let mut counter = 0;
         let mut v = Vec::new();
         let mut bossentrance_y = thread_rng().gen_range(1..11) * 16;
         let mut bosschecky = 0;
         for i in 0..vecheights.len() {
-            if vecheights[i].ypos % 208 == 0 && vecheights[i].xpos < (level_length - 256) as u64 {
+            if vecheights[i].xpos < (level_length - 256) as u64 {
                 v.push(TileData {
                     enabled: true,
                     xpos: vecheights[i].xpos,
@@ -445,8 +404,8 @@ pub mod tradhandle {
             counter += 1;
             */
         }
-        println!("{}", bosschecky);
-        (v, bosschecky)
+        println!("{}\n", (bosschecky+ bossentrance_y));
+        (v, (bosschecky+bossentrance_y))
     }
 
     fn handle_boss(
@@ -577,6 +536,7 @@ pub mod tradhandle {
 
             //naming
             let fortress = rand::thread_rng().gen_bool(1.0 / 4.5);
+            
             let names = Vec::from([
                 "remastered",
                 "cut man",
@@ -607,7 +567,7 @@ pub mod tradhandle {
                 "8",
                 "boss rush",
                 "crystal gate",
-                "{rand::thread_rng().gen_range(1..21)}",
+                stringify!(rand::thread_rng().gen_range(1..21)),
                 "kazoo",
                 "kiazo",
                 "fangame",
@@ -858,21 +818,21 @@ pub mod tradhandle {
             let mut vecheights: Vec<TileData> = binding.1;
             //terraforming
             
-            let binding = handle_terraform(vecheights, rule.clone(), length, transpoints.clone(),r);
+            let binding = handle_terraform(vecheights, rule.clone(), length, transpoints.clone());
             vecheights = binding.0;
             contents = format!(
-                "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\n",
+                "{}\na{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\n\n",
                 contents,
                 length - 256,
-                binding.1,
+                16,
                 length - 256,
-                binding.1,
+                16,
                 length - 256,
-                binding.1,
+                16,
                 length - 256,
-                binding.1,
+                16,
                 length - 256,
-                binding.1,
+                16,
                 0
             ); //1.0 boss dor
                //auto tiling
