@@ -3,10 +3,38 @@
 #[allow(unused_assignments)]
 #[allow(unreachable_patterns)]
 #[allow(unused_must_use)]
+#[allow(unused_imports)]
 pub mod tradhandle {
+
+    fn choose<T: Clone>(ops: Vec<T>) -> T {
+        let i = ops.len();
+        let rng = rand::thread_rng().gen_range(0..i);
+        ops[rng].clone()
+    }
+
     use rand::{thread_rng, Rng};
     use std::{fs, vec};
+    use std::fs::read_to_string;
 
+    trait Convert {
+        fn as_int(&self) -> u64;
+    }
+    impl Convert for bool {
+        fn as_int(&self) -> u64 {
+            if *self == true {
+                
+                1
+            }
+            else if *self == false {
+                0
+            }
+            else {
+                1
+            }
+        }
+    }
+
+    #[derive(Copy, Clone, Debug)]
     enum MetaTile {
         Full,
         StairLeft,
@@ -26,7 +54,7 @@ pub mod tradhandle {
             tst: u64,
             x: u64,
             y: u64,
-        ) -> (TileData, TileData, TileData, TileData) {
+        ) -> Vec<TileData> {
             
             fn create_tile(enabled: bool, xpos: u64, ypos: u64, tile_id: u64) -> TileData {
                 TileData {
@@ -36,78 +64,72 @@ pub mod tradhandle {
                     offset_x: 1,
                     offset_y: 1,
                     tile_id,
-                    extra_e: Some(String::from("")),
+                    
                     tile: true,
                 }
             }
             
             match tile {
-                MetaTile::Full => (
+                MetaTile::Full => vec![
                     create_tile(true, x, y, tst),
                     create_tile(true, x + 16, y, tst),
                     create_tile(true, x + 16, y + 16, tst),
                     create_tile(true, x, y + 16, tst),
-                ),
-                MetaTile::InvertedStairL => (
+                ],
+                MetaTile::InvertedStairL => vec![
                     create_tile(true, x, y, tst),
                     create_tile(true, x + 16, y, tst),
-                    create_tile(false, x + 16, y + 16, tst),
+                    
                     create_tile(true, x, y + 16, tst),
-                ),
-                MetaTile::StairLeft => (
-                    create_tile(false, x, y, tst),
+                ],
+                MetaTile::StairLeft => vec![
+                    
                     create_tile(true, x + 16, y, tst),
                     create_tile(true, x + 16, y + 16, tst),
                     create_tile(true, x, y + 16, tst),
-                ),
-                MetaTile::StairRight => (
+                ],
+                MetaTile::StairRight => vec![
                     create_tile(true, x, y, tst),
                     create_tile(true, x + 16, y, tst),
-                    create_tile(false, x + 16, y + 16, tst),
+                    
                     create_tile(true, x, y + 16, tst),
-                ),
-                MetaTile::InvertedStairR => (
+                ],
+                MetaTile::InvertedStairR => vec![
                     create_tile(true, x, y, tst),
                     create_tile(true, x + 16, y, tst),
                     create_tile(true, x + 16, y + 16, tst),
-                    create_tile(false, x, y + 16, tst),
-                ),
-                MetaTile::LineTop => (
+                    
+                ],
+                MetaTile::LineTop => vec![
                     create_tile(true, x, y, tst),
                     create_tile(true, x + 16, y, tst),
-                    create_tile(false, x + 16, y + 16, tst),
-                    create_tile(false, x, y + 16, tst),
-                ),
-                MetaTile::LineBottom => (
-                    create_tile(false, x, y, tst),
-                    create_tile(false, x + 16, y, tst),
+                    
+                ],
+                MetaTile::LineBottom => vec![
+                    
                     create_tile(true, x + 16, y + 16, tst),
                     create_tile(true, x, y + 16, tst),
-                ),
-                MetaTile::LineLeft => (
+                ],
+                MetaTile::LineLeft => vec![
                     create_tile(true, x, y, tst),
-                    create_tile(false, x + 16, y, tst),
-                    create_tile(false, x + 16, y + 16, tst),
+                    
                     create_tile(true, x, y + 16, tst),
-                ),
-                MetaTile::LineRight => (
-                    create_tile(false, x, y, tst),
+                ],
+                MetaTile::LineRight => vec![
+                    
                     create_tile(true, x + 16, y, tst),
                     create_tile(true, x + 16, y + 16, tst),
-                    create_tile(false, x, y + 16, tst),
-                ),
-                MetaTile::NoTile => (
-                    create_tile(false, x, y, tst),
-                    create_tile(false, x + 16, y, tst),
-                    create_tile(false, x + 16, y + 16, tst),
-                    create_tile(false, x, y + 16, tst),
+               
+                ],
+                MetaTile::NoTile => Vec::new(
+                    
                 ),
             }
         }
     }
     
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     struct TileData {
         //this will be used for genrating realistic, megaman-like tile data, complete with an autotile system
         #[allow(dead_code)]
@@ -121,8 +143,6 @@ pub mod tradhandle {
         tile_id: u64,
         #[allow(dead_code)]
         tile: bool,
-        #[allow(dead_code)]
-        extra_e: Option<String>,
     }
 
     impl TileData {
@@ -288,7 +308,7 @@ pub mod tradhandle {
                 offset_x: tile_pos.0,
                 offset_y: tile_pos.1,
                 tile_id: tiles.tile_id,
-                extra_e: Some(String::from("")),
+                
 
                 tile: true,
             }
@@ -369,7 +389,7 @@ pub mod tradhandle {
                                     offset_x: 1,
                                     offset_y: 1,
                                     tile_id: tile_id,
-                                    extra_e: Some(format!("{}", tile_id)),
+                                    
                                     tile: true,
                                 });
                             }
@@ -381,7 +401,7 @@ pub mod tradhandle {
                                     offset_x: 1,
                                     offset_y: 1,
                                     tile_id: tile_id,
-                                    extra_e: Some(format!("{}", tile_id)),
+                                    
                                     tile: true,
                                 });
                             }
@@ -392,7 +412,7 @@ pub mod tradhandle {
                                 offset_x: 1,
                                 offset_y: 1,
                                 tile_id: tile_id,
-                                extra_e: Some(format!("{}", tile_id)),
+                                
                                 tile: true,
                             });
                         }
@@ -406,7 +426,7 @@ pub mod tradhandle {
                                 offset_x: 1,
                                 offset_y: 1,
                                 tile_id: tile_id,
-                                extra_e: Some(format!("{}", tile_id)),
+                                
                                 tile: true,
                             });
 
@@ -420,12 +440,14 @@ pub mod tradhandle {
                                     for x in 0..16 {
                                         vecheight.push(TileData {
                                             enabled: true,
-                                            xpos: (x * 16) + (i * 16) as u64,
+                                            
+                                            xpos: ((x * 16) + (i * 16)) as u64,
+                                            
                                             ypos: (screeny - 224) + (y * 16),
                                             offset_x: 1,
                                             offset_y: 1,
                                             tile_id: tile_id,
-                                            extra_e: Some(format!("{}", tile_id)),
+                                            
                                             tile: true,
                                         });
                                     }
@@ -443,7 +465,7 @@ pub mod tradhandle {
                             offset_x: 1,
                             offset_y: 1,
                             tile_id: tile_id,
-                            extra_e: Some(format!("{}", tile_id)),
+                           
                             tile: true,
                         });
                     } else {
@@ -456,7 +478,7 @@ pub mod tradhandle {
                                 offset_x: 1,
                                 offset_y: 1,
                                 tile_id: tile_id,
-                                extra_e: Some(format!("{}", tile_id)),
+                               
                                 tile: true,
                             });
 
@@ -475,7 +497,7 @@ pub mod tradhandle {
                                             offset_x: 1,
                                             offset_y: 1,
                                             tile_id: tile_id,
-                                            extra_e: Some(format!("{}", tile_id)),
+                                            
                                             tile: true,
                                         });
                                     }
@@ -502,6 +524,46 @@ pub mod tradhandle {
         level_length: i64,
         transpoints: Vec<i64>,
     ) -> (Vec<TileData>, u64) {
+        let mut prev_meta = 0;
+        let mut xpos_metatile = Vec::<u64>::new();
+        let mut ypos_metatile = Vec::<u64>::new();
+        let mut old_mtt = MetaTile::NoTile;
+        let mut mtt_array: Vec<MetaTile> = Vec::new();
+        fn check_collider(arr: Vec<MetaTile>,selfi: MetaTile,posx: Vec<u64> ,posy: Vec<u64>,selfx: u64, selfy: u64) -> MetaTile {
+            let mut arr = arr;
+            for i in 0..posx.len() {
+
+                if posx[i].checked_sub(32) != None {
+                    arr.push(MetaTile::Full);
+                    arr.push(MetaTile::LineTop);
+                    arr.push(MetaTile::LineBottom);
+                    arr.push(MetaTile::StairLeft);
+                    arr.push(MetaTile::InvertedStairL);
+                }
+                if posx[i] == selfx+32 {
+                    arr.push(MetaTile::Full);
+                    arr.push(MetaTile::LineTop);
+                    arr.push(MetaTile::LineBottom);
+                    arr.push(MetaTile::StairRight);
+                    arr.push(MetaTile::InvertedStairR);
+                }
+                if posy[i].checked_sub(32) != None {
+                    arr.push(MetaTile::Full);
+                }
+                if posy[i] == selfy+32 {
+                    arr.push(MetaTile::Full);
+                    arr.push(MetaTile::LineTop);
+                    arr.push(MetaTile::LineBottom);
+                    arr.push(MetaTile::StairLeft);
+                    arr.push(MetaTile::InvertedStairL);
+                }
+            }
+            arr.push(MetaTile::NoTile);
+            arr.push(MetaTile::NoTile);
+            arr.push(MetaTile::NoTile);
+            choose(arr)
+        }
+
         let mut counter = 0;
         let mut v = Vec::new();
         let mut bossentrance_y = thread_rng().gen_range(1..9) * 16;
@@ -523,7 +585,7 @@ pub mod tradhandle {
                         offset_x: vecheights[i].offset_x,
                         offset_y: vecheights[i].offset_y,
                         tile_id: vecheights[i].tile_id,
-                        extra_e: Some(format!("{}", 0)),
+                       
                         tile: true,
                     });
                     v.push(TileData {
@@ -533,7 +595,7 @@ pub mod tradhandle {
                         offset_x: vecheights[i].offset_x,
                         offset_y: vecheights[i].offset_y,
                         tile_id: vecheights[i].tile_id,
-                        extra_e: Some(format!("{}", 0)),
+                        
                         tile: true,
                     });
                     for f in 0..bossentrance_y / 16 {
@@ -544,7 +606,7 @@ pub mod tradhandle {
                             offset_x: vecheights[i].offset_x,
                             offset_y: vecheights[i].offset_y,
                             tile_id: vecheights[i].tile_id,
-                            extra_e: Some(format!("{}", 0)),
+                            
                             tile: true,
                         });
                     }
@@ -556,7 +618,7 @@ pub mod tradhandle {
                             offset_x: vecheights[i].offset_x,
                             offset_y: vecheights[i].offset_y,
                             tile_id: vecheights[i].tile_id,
-                            extra_e: Some(format!("{}", 0)),
+                           
                             tile: true,
                         });
                     }
@@ -566,12 +628,20 @@ pub mod tradhandle {
                     {
                         
                         if vecheights[i].xpos % 32 == 0 && vecheights[i].ypos % 32 == 0 {
-                            let mtt = MetaTile::LineTop;
-                            let meta = MetaTile::from(mtt, vecheights[i].tile_id, vecheights[i].xpos, vecheights[i].ypos);
-                            v.push(meta.0);
-                            v.push(meta.1);
-                            v.push(meta.2);
-                            v.push(meta.3);
+                            let mtt = choose(vec![MetaTile::Full,MetaTile::NoTile,MetaTile::StairLeft,MetaTile::StairRight]);
+                            let mut o = old_mtt;
+                            xpos_metatile.push(vecheights[i].xpos);
+                            xpos_metatile.push(vecheights[i].ypos);
+                            mtt_array.push(mtt);
+                            o = check_collider(mtt_array.clone(),o,xpos_metatile.clone(),ypos_metatile.clone(),vecheights[i].xpos,vecheights[i].ypos);
+                            
+                            let meta = MetaTile::from(o, vecheights[i].tile_id, vecheights[i].xpos, vecheights[i].ypos);
+                            for fa in 0..meta.len() {
+                                v.push(meta[fa]);
+                               
+                            }
+                            
+                            println!("{:?}",meta.clone());
                         }
                     } else if (bosschecky == 0 && vecheights[i].xpos < (level_length - 544) as u64)
                         || (bosschecky != 0 && vecheights[i].xpos < (level_length - 544) as u64)
@@ -579,12 +649,19 @@ pub mod tradhandle {
                             && vecheights[i].ypos < (bossentrance_y + bosschecky) + 64
                     {
                         if vecheights[i].xpos % 32 == 0 && vecheights[i].ypos % 32 == 0 {
-                            let mtt = MetaTile::LineTop;
-                            let meta = MetaTile::from(mtt, vecheights[i].tile_id, vecheights[i].xpos, vecheights[i].ypos);
-                            v.push(meta.0);
-                            v.push(meta.1);
-                            v.push(meta.2);
-                            v.push(meta.3);
+                            let mtt = choose(vec![MetaTile::Full,MetaTile::NoTile,MetaTile::StairLeft,MetaTile::StairRight]);
+                            let mut o = old_mtt;
+                            xpos_metatile.push(vecheights[i].xpos);
+                            xpos_metatile.push(vecheights[i].ypos);
+                            mtt_array.push(mtt);
+                            o = check_collider(mtt_array.clone(),o,xpos_metatile.clone(),ypos_metatile.clone(),vecheights[i].xpos,vecheights[i].ypos);
+                            
+                            let meta = MetaTile::from(o, vecheights[i].tile_id, vecheights[i].xpos, vecheights[i].ypos);
+                            for fa in 0..meta.len() {
+                                v.push(meta[fa]);
+                               
+                            }
+
                         }
                     }
 
@@ -620,7 +697,7 @@ pub mod tradhandle {
                         offset_x: vecheights[i].offset_x,
                         offset_y: vecheights[i].offset_y,
                         tile_id: vecheights[i].tile_id,
-                        extra_e: Some(format!("{}", 0)),
+                        
                         tile: true,
                     });
                 }
@@ -726,11 +803,11 @@ pub mod tradhandle {
             can_charge = 1;
         }
         let charge_rng = rand::thread_rng().gen_range(4..7); //what charge shot will megaman use? 8/22: fixed the rng, now mm6 charge shots can be used
-        let slide_rng = rand::thread_rng().gen_bool(9.0 / 10.0); //can megaman slide? 8/22: updated rng
+        let slide_rng = rand::thread_rng().gen_bool(9.0 / 10.0).as_int(); //can megaman slide? 8/22: updated rng
         text = format!(
             "{}\n1b=\"{}\"\n1c=\"{}\"\n1d=\"{}\"\n",
             text, slide_rng, can_charge, charge_rng
-        ); //mega's abilities
+        ); //mega's abilities 
 
         let can_strike; //can protoman use proto strike (all shots are charge shots)
         let can_strike_rng = rand::thread_rng().gen_range(0..4);
@@ -776,176 +853,17 @@ pub mod tradhandle {
 
             //naming
             let fortress = rand::thread_rng().gen_bool(1.0 / 4.5);
-            let names = Vec::from([
-                "remastered",
-                "cut man",
-                "intro stage",
-                "level pack",
-                "kaizo",
-                "1-5",
-                "protovania",
-                "2023 revamped",
-                "roll",
-                "tutorial",
-                "wily stage",
-                "6",
-                "woman",
-                "man",
-                "mega man 12",
-                "mega man 13",
-                "mega man 10",
-                "enker",
-                "GB",
-                "NES",
-                "remake",
-                "challenge",
-                "recreated",
-                "recreation",
-                "demake",
-                "7",
-                "8",
-                "boss rush",
-                "crystal gate",
-                "{rand::thread_rng().gen_range(1..21)}",
-                "kazoo",
-                "kiazo",
-                "fangame",
-                "yellow devil",
-                "nico evaluates",
-                "rockman and forte",
-                "the sequel",
-                "1_8_0",
-                "1_7_5",
-                "1_6_0",
-                "puzzle",
-                "neo cutman",
-                "contest",
-                "i wanna kill megaman",
-                "force beam",
-                "gimmick",
-                "contraption",
-                "illegal",
-                "factory",
-                "cutmna",
-                "hardman",
-                "concept",
-                "x",
-                "zero",
-                "mega man maker x",
-                "community",
-                "fortnite",
-                "joe biden",
-                "strike man",
-                "megaman",
-                "protoman",
-                "bass",
-                "roll",
-                "super hard",
-                "impossible",
-                "worlds hardest",
-                "easy",
-                "traditional",
-                "megaman 2",
-                "magnet",
-                "pluto",
-                "saturn",
-                "stardroid",
-                "battan",
-                "cossack",
-                "stage",
-                "airship",
-                "fire base",
-                "dark man",
-                "4",
-                "3",
-                "2",
-                "1",
-                "big pets",
-                "Ryu",
-                "sea",
-                "v2",
-                "v3",
-                "v4",
-                "passage",
-                "entrance",
-                "skull",
-                "castle",
-                "gun",
-                "nrs",
-                "vui",
-                "feeber",
-                "example level",
-                "prontoman",
-                "mega man",
-                "rockman",
-                "electro guard",
-                "speedrun",
-                "tech",
-                "glitch",
-                "what",
-                "a",
-                "leafshield",
-                "bielles",
-                "mmmx",
-                "modded",
-                "wow",
-                "hard",
-                "ez",
-                "meka snack",
-                "go fast",
-                "apology level",
-                "b dash",
-                "vs",
-                "the level",
-                "ultimate edition",
-                "deluxe edition",
-                "and bass",
-                "dark man 5",
-                "fortress",
-                "castle",
-                "cut",
-                "intro",
-                "stage",
-                "12",
-                "13",
-                "i",
-                "wanna",
-                "kill",
-                "guard",
-                "if it was good",
-                "improvement",
-                "halloween",
-                "christmas",
-                "walk",
-                "finish",
-                "line",
-                "death",
-                "temple",
-                "DWN",
-                "dead",
-                "man",
-                "e",
-                "ballade",
-                "punk",
-                "gate",
-                "spam",
-                "burner",
-                "big fish",
-                "stage",
-                "pronto",
-                "heat ladder",
-                "quint",
-                "sunstar",
-                "palace",
-                "megamix",
-                "bpss",
-                "cossack",
-                "wily",
-                "steam",
-                "meme",
-                "dead",
-                "bals",
-            ]);
+            
+
+            fn read_lines(filename: &str) -> Vec<String> {
+                read_to_string(filename) 
+                    .unwrap()  // panic on possible file-reading errors
+                    .lines()  // split the string into an iterator of string slices
+                    .map(String::from)  // make each slice into a string
+                    .collect()  // gather them together into a vector
+            }
+
+            let names = read_lines("names.txt");
             let mut name = String::new();
 
             if fortress == true {
@@ -1060,7 +978,7 @@ pub mod tradhandle {
             let binding = handle_terraform(vecheights, rule.clone(), length, transpoints.clone());
             vecheights = binding.0;
             contents = format!(
-                "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"33\"\nBOSSDOOR2\na{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"33\"\n",
+                "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"33\"\na{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"33\"\n",
                 contents,
 
                 length - 512,
@@ -1097,9 +1015,9 @@ pub mod tradhandle {
                 contents = format!(
                     "{}a{},{}=\"{}\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"{}\"\nk{},{}=\"{}\"\n",
                     contents,
-                    vecheights[i].enabled,
                     vecheights[i].xpos,
                     vecheights[i].ypos,
+                    vecheights[i].enabled.as_int(),
                     vecheights[i].xpos,
                     vecheights[i].ypos,
                     vecheights[i].tile_id,
