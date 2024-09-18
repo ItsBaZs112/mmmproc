@@ -1,10 +1,111 @@
 #[allow(dead_code)]
 #[allow(unused_variables)]
 #[allow(unused_assignments)]
+#[allow(unreachable_patterns)]
 #[allow(unused_must_use)]
 pub mod tradhandle {
     use rand::{thread_rng, Rng};
-    use std::fs;
+    use std::{fs, vec};
+
+    enum MetaTile {
+        Full,
+        StairLeft,
+        StairRight,
+        InvertedStairL,
+        InvertedStairR,
+        LineTop,
+        LineBottom,
+        LineLeft,
+        LineRight,
+        NoTile
+    }
+
+    impl MetaTile {
+        fn from(
+            tile: MetaTile,
+            tst: u64,
+            x: u64,
+            y: u64,
+        ) -> (TileData, TileData, TileData, TileData) {
+            
+            fn create_tile(enabled: bool, xpos: u64, ypos: u64, tile_id: u64) -> TileData {
+                TileData {
+                    enabled,
+                    xpos,
+                    ypos,
+                    offset_x: 1,
+                    offset_y: 1,
+                    tile_id,
+                    extra_e: Some(String::from("")),
+                    tile: true,
+                }
+            }
+            
+            match tile {
+                MetaTile::Full => (
+                    create_tile(true, x, y, tst),
+                    create_tile(true, x + 16, y, tst),
+                    create_tile(true, x + 16, y + 16, tst),
+                    create_tile(true, x, y + 16, tst),
+                ),
+                MetaTile::InvertedStairL => (
+                    create_tile(true, x, y, tst),
+                    create_tile(true, x + 16, y, tst),
+                    create_tile(false, x + 16, y + 16, tst),
+                    create_tile(true, x, y + 16, tst),
+                ),
+                MetaTile::StairLeft => (
+                    create_tile(false, x, y, tst),
+                    create_tile(true, x + 16, y, tst),
+                    create_tile(true, x + 16, y + 16, tst),
+                    create_tile(true, x, y + 16, tst),
+                ),
+                MetaTile::StairRight => (
+                    create_tile(true, x, y, tst),
+                    create_tile(true, x + 16, y, tst),
+                    create_tile(false, x + 16, y + 16, tst),
+                    create_tile(true, x, y + 16, tst),
+                ),
+                MetaTile::InvertedStairR => (
+                    create_tile(true, x, y, tst),
+                    create_tile(true, x + 16, y, tst),
+                    create_tile(true, x + 16, y + 16, tst),
+                    create_tile(false, x, y + 16, tst),
+                ),
+                MetaTile::LineTop => (
+                    create_tile(true, x, y, tst),
+                    create_tile(true, x + 16, y, tst),
+                    create_tile(false, x + 16, y + 16, tst),
+                    create_tile(false, x, y + 16, tst),
+                ),
+                MetaTile::LineBottom => (
+                    create_tile(false, x, y, tst),
+                    create_tile(false, x + 16, y, tst),
+                    create_tile(true, x + 16, y + 16, tst),
+                    create_tile(true, x, y + 16, tst),
+                ),
+                MetaTile::LineLeft => (
+                    create_tile(true, x, y, tst),
+                    create_tile(false, x + 16, y, tst),
+                    create_tile(false, x + 16, y + 16, tst),
+                    create_tile(true, x, y + 16, tst),
+                ),
+                MetaTile::LineRight => (
+                    create_tile(false, x, y, tst),
+                    create_tile(true, x + 16, y, tst),
+                    create_tile(true, x + 16, y + 16, tst),
+                    create_tile(false, x, y + 16, tst),
+                ),
+                MetaTile::NoTile => (
+                    create_tile(false, x, y, tst),
+                    create_tile(false, x + 16, y, tst),
+                    create_tile(false, x + 16, y + 16, tst),
+                    create_tile(false, x, y + 16, tst),
+                ),
+            }
+        }
+    }
+    
 
     #[derive(Debug, Clone)]
     struct TileData {
@@ -406,12 +507,15 @@ pub mod tradhandle {
         let mut bossentrance_y = thread_rng().gen_range(1..9) * 16;
         let mut bosschecky = 0;
         for i in 0..vecheights.len() {
+            if vecheights[i].xpos >= (level_length - 544) as u64 {
+                if vecheights[i].ypos % 224 == 0 && bosschecky == 0 {
+                    bosschecky = vecheights[i].ypos;
+                }
+            }
+
             if vecheights[i].xpos < (level_length - 256) as u64 {
-                if vecheights[i].xpos > (level_length-512) as u64 {
-                    if vecheights[i].ypos % 224 == 0 && bosschecky == 0 {
-                        bosschecky = vecheights[i].ypos;
-                    }
-                    let thrush = bossentrance_y+bosschecky;
+                if vecheights[i].xpos > (level_length - 544) as u64 {
+                    let thrush = bossentrance_y + bosschecky;
                     v.push(TileData {
                         enabled: true,
                         xpos: vecheights[i].xpos,
@@ -432,44 +536,72 @@ pub mod tradhandle {
                         extra_e: Some(format!("{}", 0)),
                         tile: true,
                     });
-                    for f in 0..bossentrance_y/16 {
+                    for f in 0..bossentrance_y / 16 {
                         v.push(TileData {
                             enabled: true,
                             xpos: vecheights[i].xpos,
-                            ypos: bosschecky+f*16,
+                            ypos: bosschecky + f * 16,
                             offset_x: vecheights[i].offset_x,
                             offset_y: vecheights[i].offset_y,
                             tile_id: vecheights[i].tile_id,
                             extra_e: Some(format!("{}", 0)),
                             tile: true,
                         });
-                        
                     }
-                    for g in ((bossentrance_y/16)+1)+4..14 {
+                    for g in ((bossentrance_y / 16) + 1) + 4..14 {
                         v.push(TileData {
                             enabled: true,
                             xpos: vecheights[i].xpos,
-                            ypos: bosschecky+g*16,
+                            ypos: bosschecky + g * 16,
                             offset_x: vecheights[i].offset_x,
                             offset_y: vecheights[i].offset_y,
                             tile_id: vecheights[i].tile_id,
                             extra_e: Some(format!("{}", 0)),
                             tile: true,
                         });
-                        
                     }
-                }
-                else {
-                    v.push(TileData {
-                        enabled: true,
-                        xpos: vecheights[i].xpos,
-                        ypos: vecheights[i].ypos,
-                        offset_x: vecheights[i].offset_x,
-                        offset_y: vecheights[i].offset_y,
-                        tile_id: vecheights[i].tile_id,
-                        extra_e: Some(format!("{}", 0)),
-                        tile: true,
-                    });
+                } else {
+                    if bosschecky != 0 && vecheights[i].ypos < (bossentrance_y + bosschecky + 16)
+                        || vecheights[i].ypos > (bossentrance_y + bosschecky) + 64
+                    {
+                        
+                        if vecheights[i].xpos % 32 == 0 && vecheights[i].ypos % 32 == 0 {
+                            let mtt = MetaTile::LineTop;
+                            let meta = MetaTile::from(mtt, vecheights[i].tile_id, vecheights[i].xpos, vecheights[i].ypos);
+                            v.push(meta.0);
+                            v.push(meta.1);
+                            v.push(meta.2);
+                            v.push(meta.3);
+                        }
+                    } else if (bosschecky == 0 && vecheights[i].xpos < (level_length - 544) as u64)
+                        || (bosschecky != 0 && vecheights[i].xpos < (level_length - 544) as u64)
+                            && vecheights[i].ypos > (bossentrance_y + bosschecky + 16)
+                            && vecheights[i].ypos < (bossentrance_y + bosschecky) + 64
+                    {
+                        if vecheights[i].xpos % 32 == 0 && vecheights[i].ypos % 32 == 0 {
+                            let mtt = MetaTile::LineTop;
+                            let meta = MetaTile::from(mtt, vecheights[i].tile_id, vecheights[i].xpos, vecheights[i].ypos);
+                            v.push(meta.0);
+                            v.push(meta.1);
+                            v.push(meta.2);
+                            v.push(meta.3);
+                        }
+                    }
+
+                    /*if vecheights[i].ypos > (bossentrance_y+bosschecky+16) && vecheights[i].ypos < (bossentrance_y+bosschecky)+64 && vecheights[i].xpos <= (level_length-544) as u64 {
+                        v.push(TileData {
+                            enabled: false,
+                            xpos: vecheights[i].xpos,
+                            ypos: vecheights[i].ypos,
+                            offset_x: vecheights[i].offset_x,
+                            offset_y: vecheights[i].offset_y,
+                            tile_id: vecheights[i].tile_id,
+                            extra_e: Some(format!("{}", 0)),
+                            tile: true,
+                        });
+
+                    }
+                    */
                 }
             } else if vecheights[i].xpos >= (level_length - 256) as u64 {
                 if vecheights[i].ypos % 224 == 0 && bosschecky == 0 {
@@ -512,7 +644,7 @@ pub mod tradhandle {
             */
         }
         println!("{}", bosschecky);
-        (v, bosschecky+bossentrance_y)
+        (v, bosschecky + bossentrance_y)
     }
 
     fn handle_boss(
@@ -626,19 +758,17 @@ pub mod tradhandle {
         };
         for counts in 0..batchloop {
             let bgcount = rand::thread_rng().gen_range(0..8);
-           
+
             let length: i64 = (rand::thread_rng().gen_range(9..23)) * 256;
             //screen trans
             let mut transpoints = Vec::new();
 
-                for c in 0..length / 256 {
-                    let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
+            for c in 0..length / 256 {
+                let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
 
-                    if transition == true && c * 256 < length - 512 {
-                        transpoints.push(c * 256);
-                    }
-
-                
+                if transition == true && c * 256 < length - 768 {
+                    transpoints.push(c * 256);
+                }
             }
 
             let mut pointchecker = 0;
@@ -863,7 +993,7 @@ pub mod tradhandle {
             contents = binding;
             //general things
             let mugshot = rand::thread_rng().gen_range(1..41); //boss mugshot id
-            contents = format!("{}\n0v=\"1.8.5.2\"\n1a=\"{}\"\n4a=\"MMMRNG\"\n4b=\"{}\"\n0a=\"000000\"\n1p=\"0\"\n1q=\"{}\"\n1r=\"0\"\n1s=\"4480\"\n1bc=\"1\"\n1f=\"{}\"\n1e=\"{}\"\n", contents,name,rand::thread_rng().gen_range(0..161),length,mugshot,rand::thread_rng().gen_range(0..51)); //adds general level info
+            contents = format!("{}\n0v=\"1.8.5.2\"\n1a=\"{}\"\n4a=\"MMMRNG\"\n4b=\"{}\"\n0a=\"000000\"\n1p=\"0\"\n1q=\"{}\"\n1r=\"0\"\n1s=\"4480\"\n1bc=\"3\"\n1f=\"{}\"\n1e=\"{}\"\n", contents,name,rand::thread_rng().gen_range(0..161),length,mugshot,rand::thread_rng().gen_range(0..51)); //adds general level info
                                                                                                                                                                                                                                                                                                 //musica
             let binding = handle_music(contents.clone());
             contents = binding;
@@ -919,30 +1049,20 @@ pub mod tradhandle {
                     }
                 }
             }
-
+            contents = format!("{}2b{},{}=\"0\"\n", contents, length - 512, screeny);
             //TILING!!!!!!!!!!!
             let binding =
                 handle_tiling(contents.clone(), length, transpoints.clone(), rule.clone());
             contents = binding.0;
             let mut vecheights: Vec<TileData> = binding.1;
             //terraforming
-            
+
             let binding = handle_terraform(vecheights, rule.clone(), length, transpoints.clone());
             vecheights = binding.0;
             contents = format!(
-                "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\na{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"{}\"\n",
+                "{}a{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"33\"\nBOSSDOOR2\na{},{}=\"1\"\nb{},{}=\"1\"\nc{},{}=\"1\"\nd{},{}=\"8\"\ne{},{}=\"33\"\n",
                 contents,
-                length - 256,
-                binding.1+64,
-                length - 256,
-                binding.1+64,
-                length - 256,
-                binding.1+64,
-                length - 256,
-                binding.1+64,
-                length - 256,
-                binding.1+64,
-                33,
+
                 length - 512,
                 binding.1+64,
                 length - 512,
@@ -953,20 +1073,31 @@ pub mod tradhandle {
                 binding.1+64,
                 length - 512,
                 binding.1+64,
-                33
+
+                length - 256,
+                binding.1+64,
+                length - 256,
+                binding.1+64,
+                length - 256,
+                binding.1+64,
+                length - 256,
+                binding.1+64,
+                length - 256,
+                binding.1+64,
+
             ); //boss dor
 
-            
-               //auto tiling
-               /*
-               for i in 0..vecheights.len() {
-                   vecheights[i] = TileData::autotile_prep(&vecheights[i].clone(), &vecheights);
-               }
-               */
+            //auto tiling
+            /*
+            for i in 0..vecheights.len() {
+                vecheights[i] = TileData::autotile_prep(&vecheights[i].clone(), &vecheights);
+            }
+            */
             for i in 0..vecheights.len() {
                 contents = format!(
-                    "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"{}\"\nk{},{}=\"{}\"\n",
+                    "{}a{},{}=\"{}\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"{}\"\nk{},{}=\"{}\"\n",
                     contents,
+                    vecheights[i].enabled,
                     vecheights[i].xpos,
                     vecheights[i].ypos,
                     vecheights[i].xpos,
@@ -1016,7 +1147,5 @@ pub mod tradhandle {
                 fs::rename("level.mmlv", format!("level{}.mmlv", counts + 1));
             }
         }
-        
     }
-    
 }
