@@ -13,8 +13,8 @@ pub mod tradhandle {
     }
 
     use rand::{thread_rng, Rng};
-    use std::{fs, vec};
     use std::fs::read_to_string;
+    use std::{fs, vec};
 
     trait Convert {
         fn as_int(&self) -> u64;
@@ -22,19 +22,16 @@ pub mod tradhandle {
     impl Convert for bool {
         fn as_int(&self) -> u64 {
             if *self == true {
-                
                 1
-            }
-            else if *self == false {
+            } else if *self == false {
                 0
-            }
-            else {
+            } else {
                 1
             }
         }
     }
 
-    #[derive(Copy, Clone, Debug)]
+    #[derive(Copy, Clone, Debug, PartialEq)]
     enum MetaTile {
         Full,
         StairLeft,
@@ -45,17 +42,11 @@ pub mod tradhandle {
         LineBottom,
         LineLeft,
         LineRight,
-        NoTile
+        NoTile,
     }
 
     impl MetaTile {
-        fn from(
-            tile: MetaTile,
-            tst: u64,
-            x: u64,
-            y: u64,
-        ) -> Vec<TileData> {
-            
+        fn from(tile: MetaTile, tst: u64, x: u64, y: u64) -> Vec<TileData> {
             fn create_tile(enabled: bool, xpos: u64, ypos: u64, tile_id: u64) -> TileData {
                 TileData {
                     enabled,
@@ -64,11 +55,11 @@ pub mod tradhandle {
                     offset_x: 1,
                     offset_y: 1,
                     tile_id,
-                    
+
                     tile: true,
                 }
             }
-            
+
             match tile {
                 MetaTile::Full => vec![
                     create_tile(true, x, y, tst),
@@ -79,11 +70,9 @@ pub mod tradhandle {
                 MetaTile::InvertedStairL => vec![
                     create_tile(true, x, y, tst),
                     create_tile(true, x + 16, y, tst),
-                    
                     create_tile(true, x, y + 16, tst),
                 ],
                 MetaTile::StairLeft => vec![
-                    
                     create_tile(true, x + 16, y, tst),
                     create_tile(true, x + 16, y + 16, tst),
                     create_tile(true, x, y + 16, tst),
@@ -91,43 +80,33 @@ pub mod tradhandle {
                 MetaTile::StairRight => vec![
                     create_tile(true, x, y, tst),
                     create_tile(true, x + 16, y, tst),
-                    
                     create_tile(true, x, y + 16, tst),
                 ],
                 MetaTile::InvertedStairR => vec![
                     create_tile(true, x, y, tst),
                     create_tile(true, x + 16, y, tst),
                     create_tile(true, x + 16, y + 16, tst),
-                    
                 ],
                 MetaTile::LineTop => vec![
                     create_tile(true, x, y, tst),
                     create_tile(true, x + 16, y, tst),
-                    
                 ],
                 MetaTile::LineBottom => vec![
-                    
                     create_tile(true, x + 16, y + 16, tst),
                     create_tile(true, x, y + 16, tst),
                 ],
                 MetaTile::LineLeft => vec![
                     create_tile(true, x, y, tst),
-                    
                     create_tile(true, x, y + 16, tst),
                 ],
                 MetaTile::LineRight => vec![
-                    
                     create_tile(true, x + 16, y, tst),
                     create_tile(true, x + 16, y + 16, tst),
-               
                 ],
-                MetaTile::NoTile => Vec::new(
-                    
-                ),
+                MetaTile::NoTile => Vec::new(),
             }
         }
     }
-    
 
     #[derive(Debug, Clone, Copy)]
     struct TileData {
@@ -308,7 +287,6 @@ pub mod tradhandle {
                 offset_x: tile_pos.0,
                 offset_y: tile_pos.1,
                 tile_id: tiles.tile_id,
-                
 
                 tile: true,
             }
@@ -389,7 +367,7 @@ pub mod tradhandle {
                                     offset_x: 1,
                                     offset_y: 1,
                                     tile_id: tile_id,
-                                    
+
                                     tile: true,
                                 });
                             }
@@ -401,7 +379,7 @@ pub mod tradhandle {
                                     offset_x: 1,
                                     offset_y: 1,
                                     tile_id: tile_id,
-                                    
+
                                     tile: true,
                                 });
                             }
@@ -412,7 +390,7 @@ pub mod tradhandle {
                                 offset_x: 1,
                                 offset_y: 1,
                                 tile_id: tile_id,
-                                
+
                                 tile: true,
                             });
                         }
@@ -426,7 +404,7 @@ pub mod tradhandle {
                                 offset_x: 1,
                                 offset_y: 1,
                                 tile_id: tile_id,
-                                
+
                                 tile: true,
                             });
 
@@ -440,14 +418,14 @@ pub mod tradhandle {
                                     for x in 0..16 {
                                         vecheight.push(TileData {
                                             enabled: true,
-                                            
+
                                             xpos: ((x * 16) + (i * 16)) as u64,
-                                            
+
                                             ypos: (screeny - 224) + (y * 16),
                                             offset_x: 1,
                                             offset_y: 1,
                                             tile_id: tile_id,
-                                            
+
                                             tile: true,
                                         });
                                     }
@@ -465,7 +443,7 @@ pub mod tradhandle {
                             offset_x: 1,
                             offset_y: 1,
                             tile_id: tile_id,
-                           
+
                             tile: true,
                         });
                     } else {
@@ -478,7 +456,7 @@ pub mod tradhandle {
                                 offset_x: 1,
                                 offset_y: 1,
                                 tile_id: tile_id,
-                               
+
                                 tile: true,
                             });
 
@@ -497,7 +475,7 @@ pub mod tradhandle {
                                             offset_x: 1,
                                             offset_y: 1,
                                             tile_id: tile_id,
-                                            
+
                                             tile: true,
                                         });
                                     }
@@ -529,52 +507,80 @@ pub mod tradhandle {
         let mut ypos_metatile = Vec::<u64>::new();
         let mut old_mtt = MetaTile::NoTile;
         let mut mtt_array: Vec<MetaTile> = Vec::new();
-        fn check_collider(arr: Vec<MetaTile>,selfi: MetaTile,posx: Vec<u64> ,posy: Vec<u64>,selfx: u64, selfy: u64) -> MetaTile {
+        fn check_collider(
+            arr: Vec<MetaTile>,
+            selfi: MetaTile,
+            posx: Vec<u64>,
+            posy: Vec<u64>,
+            selfx: u64,
+            selfy: u64,
+            tiles: Vec<MetaTile>,
+        ) -> MetaTile {
             let mut arr = arr;
+            let mut can_notile = true;
             for i in 0..posx.len() {
-
                 if posx[i].checked_sub(32) != None {
-                    arr.push(MetaTile::Full);
-                    arr.push(MetaTile::LineTop);
-                    arr.push(MetaTile::LineBottom);
-                    arr.push(MetaTile::StairLeft);
-                    arr.push(MetaTile::InvertedStairL);
+                    if posx[i] - 32 == selfx {
+                        arr.push(MetaTile::Full);
+                        arr.push(MetaTile::LineTop);
+                        arr.push(MetaTile::LineBottom);
+                        if tiles[i] == MetaTile::Full {
+                            arr.push(MetaTile::StairLeft);
+                            arr.push(MetaTile::InvertedStairL);
+                        }
+                    }
                 }
-                if posx[i] == selfx+32 {
+                if posx[i] == selfx + 32 {
                     arr.push(MetaTile::Full);
                     arr.push(MetaTile::LineTop);
                     arr.push(MetaTile::LineBottom);
-                    arr.push(MetaTile::StairRight);
-                    arr.push(MetaTile::InvertedStairR);
+                    if tiles[i] == MetaTile::Full {
+                        arr.push(MetaTile::StairRight);
+                        arr.push(MetaTile::InvertedStairR);
+                    }
                 }
                 if posy[i].checked_sub(32) != None {
-                    arr.push(MetaTile::Full);
+                    can_notile = false;
+                    if posy[i] - 32 == selfy {
+                        arr.push(MetaTile::Full);
+                        
+                    }
                 }
-                if posy[i] == selfy+32 {
-                    arr.push(MetaTile::Full);
-                    arr.push(MetaTile::LineTop);
-                    arr.push(MetaTile::LineBottom);
-                    arr.push(MetaTile::StairLeft);
-                    arr.push(MetaTile::InvertedStairL);
+                if posy[i] + 32 == selfy {
+                    if posy[i] + 32 == selfy {
+                        arr.push(MetaTile::Full);
+                        
+                    }
                 }
             }
-            arr.push(MetaTile::NoTile);
-            arr.push(MetaTile::NoTile);
-            arr.push(MetaTile::NoTile);
-            choose(arr)
+
+            let mut e;
+            if can_notile {
+                e = choose(vec![choose(arr)]);
+            } else {
+                e = choose(arr);
+            }
+            e
         }
 
         let mut counter = 0;
         let mut v = Vec::new();
         let mut bossentrance_y = thread_rng().gen_range(1..9) * 16;
         let mut bosschecky = 0;
+        let mut terraintype: &str = "FLAT";
+        let mut terraintop = thread_rng().gen_range(4..7) * 32;
+        let mut screeny = 0;
+        let mut terraincount = 0;
+
         for i in 0..vecheights.len() {
             if vecheights[i].xpos >= (level_length - 544) as u64 {
                 if vecheights[i].ypos % 224 == 0 && bosschecky == 0 {
                     bosschecky = vecheights[i].ypos;
                 }
             }
-
+            if vecheights[i].ypos % 224 == 0 && bosschecky == 0 {
+                screeny = vecheights[i].ypos;
+            }
             if vecheights[i].xpos < (level_length - 256) as u64 {
                 if vecheights[i].xpos > (level_length - 544) as u64 {
                     let thrush = bossentrance_y + bosschecky;
@@ -585,7 +591,7 @@ pub mod tradhandle {
                         offset_x: vecheights[i].offset_x,
                         offset_y: vecheights[i].offset_y,
                         tile_id: vecheights[i].tile_id,
-                       
+
                         tile: true,
                     });
                     v.push(TileData {
@@ -595,7 +601,7 @@ pub mod tradhandle {
                         offset_x: vecheights[i].offset_x,
                         offset_y: vecheights[i].offset_y,
                         tile_id: vecheights[i].tile_id,
-                        
+
                         tile: true,
                     });
                     for f in 0..bossentrance_y / 16 {
@@ -606,7 +612,7 @@ pub mod tradhandle {
                             offset_x: vecheights[i].offset_x,
                             offset_y: vecheights[i].offset_y,
                             tile_id: vecheights[i].tile_id,
-                            
+
                             tile: true,
                         });
                     }
@@ -618,7 +624,7 @@ pub mod tradhandle {
                             offset_x: vecheights[i].offset_x,
                             offset_y: vecheights[i].offset_y,
                             tile_id: vecheights[i].tile_id,
-                           
+
                             tile: true,
                         });
                     }
@@ -626,22 +632,74 @@ pub mod tradhandle {
                     if bosschecky != 0 && vecheights[i].ypos < (bossentrance_y + bosschecky + 16)
                         || vecheights[i].ypos > (bossentrance_y + bosschecky) + 64
                     {
-                        
                         if vecheights[i].xpos % 32 == 0 && vecheights[i].ypos % 32 == 0 {
-                            let mtt = choose(vec![MetaTile::Full,MetaTile::NoTile,MetaTile::StairLeft,MetaTile::StairRight]);
+                            let mut tempx = 0;
+                            let mut tempy = 0;
+                            match terraintype {
+                                "FLAT" => {
+                                    terraincount += 1;
+                                    tempx = vecheights[i].xpos;
+                                    if vecheights[i].ypos == screeny + terraintop {
+                                        tempy = screeny + terraintop;
+                                    } else if vecheights[i].ypos > screeny + terraintop {
+                                        tempy = vecheights[i].ypos;
+                                    } else {
+                                        tempy = screeny + terraintop;
+                                    }
+                                    if terraincount >= rand::thread_rng().gen_range(1..5) {
+                                        terraintype = choose(vec!["FLAT", "PITS"]);
+                                        
+                                        terraintop = thread_rng().gen_range(4..7) * 32 as u64;
+                                        terraincount = 0;
+                                    }
+                                }
+                                "PITS" => {
+                                    terraincount += 1;
+                                    tempx = vecheights[i].xpos;
+                                    tempy = 4480-224;
+                                    if terraincount >= 1 {
+                                        terraintype = choose(vec!["FLAT", "PITS"]);
+                                        terraintop = thread_rng().gen_range(4..7) * 32 as u64;
+                                        terraincount = 0;
+                                    }
+                                }
+                                _ => {
+                                    tempx = vecheights[i].xpos;
+                                    tempx = vecheights[i].ypos;
+                                }
+                            }
+                            let mut thev = vec![
+                                MetaTile::Full,
+                               
+                                MetaTile::StairLeft,
+                                MetaTile::StairRight,
+                            ];
+                            if vecheights[i].ypos < screeny + terraintop {
+                                for fbb in 0..5 {
+                                    thev.push(MetaTile::NoTile);
+                                }
+                            }
+                            let mtt = choose(thev);
                             let mut o = old_mtt;
-                            xpos_metatile.push(vecheights[i].xpos);
-                            xpos_metatile.push(vecheights[i].ypos);
+                            xpos_metatile.push(tempx);
+                            ypos_metatile.push(tempy);
                             mtt_array.push(mtt);
-                            o = check_collider(mtt_array.clone(),o,xpos_metatile.clone(),ypos_metatile.clone(),vecheights[i].xpos,vecheights[i].ypos);
-                            
-                            let meta = MetaTile::from(o, vecheights[i].tile_id, vecheights[i].xpos, vecheights[i].ypos);
+                            o = check_collider(
+                                mtt_array.clone(),
+                                o,
+                                xpos_metatile.clone(),
+                                ypos_metatile.clone(),
+                                tempx,
+                                tempy,
+                                mtt_array.clone(),
+                            );
+
+                            let meta = MetaTile::from(o, vecheights[i].tile_id, tempx, tempy);
                             for fa in 0..meta.len() {
                                 v.push(meta[fa]);
-                               
                             }
-                            
-                            println!("{:?}",meta.clone());
+
+                            println!("{:?}", meta.clone());
                         }
                     } else if (bosschecky == 0 && vecheights[i].xpos < (level_length - 544) as u64)
                         || (bosschecky != 0 && vecheights[i].xpos < (level_length - 544) as u64)
@@ -649,19 +707,53 @@ pub mod tradhandle {
                             && vecheights[i].ypos < (bossentrance_y + bosschecky) + 64
                     {
                         if vecheights[i].xpos % 32 == 0 && vecheights[i].ypos % 32 == 0 {
-                            let mtt = choose(vec![MetaTile::Full,MetaTile::NoTile,MetaTile::StairLeft,MetaTile::StairRight]);
+                            let mut tempx = 0;
+                            let mut tempy = 0;
+                            match terraintype {
+                                "FLAT" => {
+                                    tempx = vecheights[i].xpos;
+                                    tempy = screeny + terraintop;
+                                    if terraincount >= rand::thread_rng().gen_range(5..16) {
+                                        terraintype = choose(vec!["FLAT", "FLAT"]);
+                                        terraintop = thread_rng().gen_range(0..7) * 32;
+                                        terraincount = 0;
+                                    }
+                                }
+                                _ => {
+                                    tempx = vecheights[i].xpos;
+                                    tempx = vecheights[i].ypos;
+                                }
+                            }
+                            let mut thev = vec![
+                                MetaTile::Full,
+                               
+                                MetaTile::StairLeft,
+                                MetaTile::StairRight,
+                            ];
+                            if vecheights[i].ypos < screeny + terraintop {
+                                for fbb in 0..5 {
+                                    thev.push(MetaTile::NoTile);
+                                }
+                            }
+                            let mtt = choose(thev);
                             let mut o = old_mtt;
-                            xpos_metatile.push(vecheights[i].xpos);
-                            xpos_metatile.push(vecheights[i].ypos);
+                            xpos_metatile.push(tempx);
+                            ypos_metatile.push(tempy);
                             mtt_array.push(mtt);
-                            o = check_collider(mtt_array.clone(),o,xpos_metatile.clone(),ypos_metatile.clone(),vecheights[i].xpos,vecheights[i].ypos);
-                            
-                            let meta = MetaTile::from(o, vecheights[i].tile_id, vecheights[i].xpos, vecheights[i].ypos);
+                            o = check_collider(
+                                mtt_array.clone(),
+                                o,
+                                xpos_metatile.clone(),
+                                ypos_metatile.clone(),
+                                tempx,
+                                tempy,
+                                mtt_array.clone(),
+                            );
+
+                            let meta = MetaTile::from(o, vecheights[i].tile_id, tempx, tempy);
                             for fa in 0..meta.len() {
                                 v.push(meta[fa]);
-                               
                             }
-
                         }
                     }
 
@@ -697,7 +789,7 @@ pub mod tradhandle {
                         offset_x: vecheights[i].offset_x,
                         offset_y: vecheights[i].offset_y,
                         tile_id: vecheights[i].tile_id,
-                        
+
                         tile: true,
                     });
                 }
@@ -807,7 +899,7 @@ pub mod tradhandle {
         text = format!(
             "{}\n1b=\"{}\"\n1c=\"{}\"\n1d=\"{}\"\n",
             text, slide_rng, can_charge, charge_rng
-        ); //mega's abilities 
+        ); //mega's abilities
 
         let can_strike; //can protoman use proto strike (all shots are charge shots)
         let can_strike_rng = rand::thread_rng().gen_range(0..4);
@@ -834,7 +926,7 @@ pub mod tradhandle {
             batchloop = 1;
         };
         for counts in 0..batchloop {
-            let bgcount = rand::thread_rng().gen_range(0..8);
+            let bgcount = rand::thread_rng().gen_range(0..856);
 
             let length: i64 = (rand::thread_rng().gen_range(9..23)) * 256;
             //screen trans
@@ -853,14 +945,13 @@ pub mod tradhandle {
 
             //naming
             let fortress = rand::thread_rng().gen_bool(1.0 / 4.5);
-            
 
             fn read_lines(filename: &str) -> Vec<String> {
-                read_to_string(filename) 
-                    .unwrap()  // panic on possible file-reading errors
-                    .lines()  // split the string into an iterator of string slices
-                    .map(String::from)  // make each slice into a string
-                    .collect()  // gather them together into a vector
+                read_to_string(filename)
+                    .unwrap() // panic on possible file-reading errors
+                    .lines() // split the string into an iterator of string slices
+                    .map(String::from) // make each slice into a string
+                    .collect() // gather them together into a vector
             }
 
             let names = read_lines("names.txt");
