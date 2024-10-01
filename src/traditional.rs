@@ -633,8 +633,12 @@ pub mod tradhandle {
                             match terraintype {
                                 "FLAT" => {
                                     terraincount += 1;
-                                    tempx = vecheights[i].xpos;
-
+                                    if vecheights[i].ypos < terraintop+screeny {
+                                        tempx = u64::MAX;
+                                    }
+                                    else {
+                                        tempx = vecheights[i].xpos;
+                                    }
                                     tempy = vecheights[i].ypos;
                                     if terraincount >= rand::thread_rng().gen_range(1..5) {
                                         terraintype = choose(vec!["FLAT", "PITS", "PITS"]);
@@ -691,6 +695,7 @@ pub mod tradhandle {
                             let mut tempy = 0;
                             match terraintype {
                                 "FLAT" => {
+                                    
                                     terraincount += 1;
                                     tempx = vecheights[i].xpos;
 
