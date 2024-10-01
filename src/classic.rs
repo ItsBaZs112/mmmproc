@@ -51,22 +51,20 @@ pub mod handle {
         let mut vecheighttrack = 0;
         let mut height = rand::thread_rng().gen_range(1..13);
         for i in 0..level_length / 16 {
-            if pointchecker < verttiles.len() {
-                if i - 1 == verttiles[pointchecker] / 16 && i * 256 != level_length {
-                    for j in 1..height {
-                        vecheight.push(height);
-                        vecheighttrack += 1;
-                        text = format!(
-                                "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                                text, i-1 * 16, (screeny)+224 - j * 16, i-1 * 16, (screeny)+224 - j * 16, tile_id,
-                                i-1 * 16, (screeny)+224 - j * 16, i-1 * 16, (screeny)+224 - j * 16, i-1 * 16, (screeny)+224 - j * 16
-                            );
-                    }
-                    screeny += 224;
-                    pointchecker += 1;
-
-                    println!("{screeny}");
+            if pointchecker < verttiles.len() && i - 1 == verttiles[pointchecker] / 16 && i * 256 != level_length {
+                for j in 1..height {
+                    vecheight.push(height);
+                    vecheighttrack += 1;
+                    text = format!(
+                            "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
+                            text, i-16, (screeny)+224 - j * 16, i-16, (screeny)+224 - j * 16, tile_id,
+                            i-16, (screeny)+224 - j * 16, i-16, (screeny)+224 - j * 16, i-16, (screeny)+224 - j * 16
+                        );
                 }
+                screeny += 224;
+                pointchecker += 1;
+
+                println!("{screeny}");
             }
             if vecheighttrack == 0 {
                 height = rand::thread_rng().gen_range(1..13);
@@ -138,13 +136,11 @@ pub mod handle {
         verttiles: Vec<i64>,
     ) -> String {
         let count = rand::thread_rng().gen_range(0..lvllength / 32);
-        let objectids = vec![
+        let objectids = [rand::thread_rng().gen_range(0..237),
             rand::thread_rng().gen_range(0..237),
             rand::thread_rng().gen_range(0..237),
             rand::thread_rng().gen_range(0..237),
-            rand::thread_rng().gen_range(0..237),
-            rand::thread_rng().gen_range(0..237),
-        ];
+            rand::thread_rng().gen_range(0..237)];
         #[allow(unused_assignments)]
         let mut screeny = 0;
         println!("enemy count: {}", count);
@@ -252,17 +248,15 @@ pub mod handle {
         let mut pointchecker = 0;
 
         let l: usize = length.try_into().unwrap();
-        let xpos = (l - 256) + (rand::thread_rng().gen_range(7..16)) * 16 as usize;
+        let xpos = (l - 256) + (rand::thread_rng().gen_range(7..16)) * 16_usize;
 
         let ypos = 224 - (rand::thread_rng().gen_range(7..10)) * 16;
 
         for i in -1..length / 256 {
-            if pointchecker < transpoints.len() {
-                if i - 1 == transpoints[pointchecker] / 256 {
-                    screeny += 224;
-                    pointchecker += 1;
-                    println!("{screeny}");
-                }
+            if pointchecker < transpoints.len() && i - 1 == transpoints[pointchecker] / 256 {
+                screeny += 224;
+                pointchecker += 1;
+                println!("{screeny}");
             }
         }
 
@@ -315,7 +309,7 @@ pub mod handle {
         let mut transpoints = Vec::new();
         for c in 0..length / 256 {
             let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
-            if transition == true && c * 256 != length - 256 {
+            if transition && c * 256 != length - 256 {
                 transpoints.push(c * 256);
             }
         }
@@ -531,32 +525,30 @@ pub mod handle {
 
         //activate sections and add backgrounds
         for i in -1..length / 256 {
-            if pointchecker < transpoints.len() {
-                if i - 1 == transpoints[pointchecker] / 256 {
-                    if i != -1 {
-                        screeny += 224;
-                        pointchecker += 1;
-                        contents = format!("{}2a{},{}=\"1\"\n", contents, (i - 1) * 256, screeny);
-                        //add bg
+            if pointchecker < transpoints.len() && i - 1 == transpoints[pointchecker] / 256 {
+                if i != -1 {
+                    screeny += 224;
+                    pointchecker += 1;
+                    contents = format!("{}2a{},{}=\"1\"\n", contents, (i - 1) * 256, screeny);
+                    //add bg
 
-                        contents = format!(
-                            "{}2d{},{}=\"{}\"\n",
-                            contents,
-                            (i - 1) * 256,
-                            screeny,
-                            bgcount
-                        );
-                        println!("{screeny}");
-                    } else {
-                        screeny += 224;
-                        pointchecker += 1;
-                        contents = format!("{}2a{},{}=\"1\"\n", contents, (i) * 256, screeny);
-                        //add bg
+                    contents = format!(
+                        "{}2d{},{}=\"{}\"\n",
+                        contents,
+                        (i - 1) * 256,
+                        screeny,
+                        bgcount
+                    );
+                    println!("{screeny}");
+                } else {
+                    screeny += 224;
+                    pointchecker += 1;
+                    contents = format!("{}2a{},{}=\"1\"\n", contents, (i) * 256, screeny);
+                    //add bg
 
-                        contents =
-                            format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
-                        println!("{screeny}");
-                    }
+                    contents =
+                        format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
+                    println!("{screeny}");
                 }
             }
             if i != -1 {
@@ -613,7 +605,7 @@ pub mod handle {
             contents.clone(),
             bossid,
             vecheights.clone(),
-            length.clone(),
+            length,
             transpoints.clone(),
         );
         contents = binding;
