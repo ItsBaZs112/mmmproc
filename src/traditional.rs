@@ -892,7 +892,7 @@ pub mod tradhandle {
             let mut transpoints = Vec::new();
 
             for c in 0..length / 256 {
-                let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
+                let transition = rand::thread_rng().gen_bool(1.0 / 3.0);
 
                 if transition && c * 256 < length - 768 {
                     transpoints.push(c * 256);
