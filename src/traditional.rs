@@ -528,7 +528,6 @@ pub mod tradhandle {
         let mut terraintop = thread_rng().gen_range(4..7) * 32;
         let mut screeny = 0;
         let mut terraincount = 0;
-
         for i in 0..vecheights.len() {
             if vecheights[i].xpos >= (level_length - 544) as u64
                 && vecheights[i].ypos % 224 == 0
@@ -590,9 +589,16 @@ pub mod tradhandle {
                     || vecheights[i].ypos > (bossentrance_y + bosschecky) + 64
                 {
                     if vecheights[i].xpos % 32 == 0 && vecheights[i].ypos % 32 == 0 {
+                        
                         let mut tempx = 0;
                         let mut tempy = 0;
-
+                        let mut skip = false;
+                        for j2 in vecheights.iter() {
+                            if j2.xpos != u64::MAX && j2.ypos < vecheights[i].ypos && j2.ypos <= terraintop+screeny {
+                               skip = true;
+                               break
+                            }
+                       }
                         match terraintype {
                             "FLAT" => {
                                 terraincount += 1;
@@ -604,15 +610,16 @@ pub mod tradhandle {
                                 tempy = vecheights[i].ypos;
                                 if terraincount >= rand::thread_rng().gen_range(1..5) {
                                     terraintype = choose(vec!["FLAT", "PITS", "PITS"]);
-
+    
                                     terraintop = thread_rng().gen_range(4..7) * 32_u64;
                                     terraincount = 0;
                                 }
                             }
                             "PITS" => {
-                                tempy = 0;
+                                
+                                tempy = vecheights[i].ypos;
                                 tempx = u64::MAX;
-
+    
                                 terraintype = choose(vec!["FLAT", "FLAT_BORDERL", "FLAT_BORDERR"]);
                                 terraintop = thread_rng().gen_range(4..7) * 32_u64;
                                 terraincount = 0;
@@ -624,8 +631,8 @@ pub mod tradhandle {
                                     tempx = vecheights[i].xpos;
                                 }
                                 tempy = vecheights[i].ypos;
-
-                                terraintype = choose(vec!["FLAT","PITS"]);
+    
+                                terraintype = choose(vec!["FLAT", "PITS"]);
                                 terraintop = thread_rng().gen_range(4..7) * 32_u64;
                                 terraincount = 0;
                             }
@@ -636,44 +643,47 @@ pub mod tradhandle {
                                     tempx = vecheights[i].xpos;
                                 }
                                 tempy = vecheights[i].ypos;
-
-                                terraintype = choose(vec!["FLAT","PITS"]);
+    
+                                terraintype = choose(vec!["FLAT", "PITS"]);
                                 terraintop = thread_rng().gen_range(4..7) * 32_u64;
                                 terraincount = 0;
                             }
+    
                             _ => {
                                 tempx = vecheights[i].xpos;
                                 tempx = vecheights[i].ypos;
                             }
                         }
                         if tempx != u64::MAX {
-                            let mtt = if tempy == terraintop + screeny {
-                                
-                                if terraintype == "FLAT" {
+                            let mtt = if !skip {
+                                if tempy == terraintop + screeny && !skip {
+                                    if terraintype == "FLAT" {
+                                        MetaTile::Full
+                                    } else if terraintype == "FLAT_BORDERL" {
+                                        MetaTile::LineLeft
+                                    } else if terraintype == "FLAT_BORDERR" {
+                                        MetaTile::LineRight
+                                    } else {
+                                        MetaTile::NoTile
+                                    }
+                                } else if tempy > terraintop + screeny && terraintype != "PITS" || skip
+                                {
                                     MetaTile::Full
-                                } else if terraintype == "FLAT_BORDERL" {
-                                    MetaTile::LineLeft
-                                } else if terraintype == "FLAT_BORDERR" {
-                                    MetaTile::LineRight
                                 } else {
                                     MetaTile::NoTile
                                 }
-                            } else if tempy > terraintop+screeny {
+                            } else {
                                 MetaTile::Full
-                            }
-                            else {
-                                MetaTile::NoTile
                             };
                             let o = mtt;
-
+    
                             xpos_metatile.push(tempx);
                             ypos_metatile.push(tempy);
-
+    
                             let meta = MetaTile::from(o, vecheights[i].tile_id, tempx, tempy);
                             for fa in 0..meta.len() {
                                 v.push(meta[fa]);
                             }
-                            
                         }
                     }
                 } else if ((bosschecky == 0 && vecheights[i].xpos < (level_length - 544) as u64)
@@ -683,67 +693,73 @@ pub mod tradhandle {
                     && vecheights[i].xpos % 32 == 0
                     && vecheights[i].ypos % 32 == 0
                 {
-                    if vecheights[i].xpos % 32 == 0 && vecheights[i].ypos % 32 == 0 {
-                        let mut tempx = 0;
-                        let mut tempy = 0;
-
-                        match terraintype {
-                            "FLAT" => {
-                                terraincount += 1;
-                                if vecheights[i].ypos < terraintop + screeny {
-                                    tempx = u64::MAX;
-                                } else {
-                                    tempx = vecheights[i].xpos;
-                                }
-                                tempy = vecheights[i].ypos;
-                                if terraincount >= rand::thread_rng().gen_range(1..5) {
-                                    terraintype = choose(vec!["FLAT", "PITS", "PITS"]);
-
-                                    terraintop = thread_rng().gen_range(4..7) * 32_u64;
-                                    terraincount = 0;
-                                }
-                            }
-                            "PITS" => {
-                                tempy = 0;
+                    let mut tempx = 0;
+                    let mut tempy = 0;
+                    let mut skip = false;
+                    for j2 in vecheights.iter() {
+                        if j2.xpos != u64::MAX && j2.ypos < vecheights[i].ypos && j2.ypos <= terraintop+screeny {
+                           skip = true;
+                           break
+                        }
+                   }
+                    match terraintype {
+                        "FLAT" => {
+                            terraincount += 1;
+                            if vecheights[i].ypos < terraintop + screeny {
                                 tempx = u64::MAX;
-
-                                terraintype = choose(vec!["FLAT", "FLAT_BORDERL", "FLAT_BORDERR"]);
-                                terraintop = thread_rng().gen_range(4..7) * 32_u64;
-                                terraincount = 0;
-                            }
-                            "FLAT_BORDERL" => {
-                                if vecheights[i].ypos < terraintop + screeny {
-                                    tempx = u64::MAX;
-                                } else {
-                                    tempx = vecheights[i].xpos;
-                                }
-                                tempy = vecheights[i].ypos;
-
-                                terraintype = choose(vec!["FLAT","PITS"]);
-                                terraintop = thread_rng().gen_range(4..7) * 32_u64;
-                                terraincount = 0;
-                            }
-                            "FLAT_BORDERR" => {
-                                if vecheights[i].ypos < terraintop + screeny {
-                                    tempx = u64::MAX;
-                                } else {
-                                    tempx = vecheights[i].xpos;
-                                }
-                                tempy = vecheights[i].ypos;
-
-                                terraintype = choose(vec!["FLAT","PITS"]);
-                                terraintop = thread_rng().gen_range(4..7) * 32_u64;
-                                terraincount = 0;
-                            }
-                           
-                            _ => {
+                            } else {
                                 tempx = vecheights[i].xpos;
-                                tempx = vecheights[i].ypos;
+                            }
+                            tempy = vecheights[i].ypos;
+                            if terraincount >= rand::thread_rng().gen_range(1..5) {
+                                terraintype = choose(vec!["FLAT", "PITS", "PITS"]);
+
+                                terraintop = thread_rng().gen_range(4..7) * 32_u64;
+                                terraincount = 0;
                             }
                         }
-                        if tempx != u64::MAX {
-                            let mtt = if tempy == terraintop + screeny {
-                                
+                        "PITS" => {
+
+                            tempy = vecheights[i].ypos;
+                            tempx = u64::MAX;
+                           
+                            terraintype = choose(vec!["FLAT", "FLAT_BORDERL", "FLAT_BORDERR"]);
+                            terraintop = thread_rng().gen_range(4..7) * 32_u64;
+                            terraincount = 0;
+                        }
+                        "FLAT_BORDERL" => {
+                            if vecheights[i].ypos < terraintop + screeny {
+                                tempx = u64::MAX;
+                            } else {
+                                tempx = vecheights[i].xpos;
+                            }
+                            tempy = vecheights[i].ypos;
+
+                            terraintype = choose(vec!["FLAT", "PITS"]);
+                            terraintop = thread_rng().gen_range(4..7) * 32_u64;
+                            terraincount = 0;
+                        }
+                        "FLAT_BORDERR" => {
+                            if vecheights[i].ypos < terraintop + screeny {
+                                tempx = u64::MAX;
+                            } else {
+                                tempx = vecheights[i].xpos;
+                            }
+                            tempy = vecheights[i].ypos;
+
+                            terraintype = choose(vec!["FLAT", "PITS"]);
+                            terraintop = thread_rng().gen_range(4..7) * 32_u64;
+                            terraincount = 0;
+                        }
+
+                        _ => {
+                            tempx = vecheights[i].xpos;
+                            tempx = vecheights[i].ypos;
+                        }
+                    }
+                    if tempx != u64::MAX {
+                        let mtt = if !skip {
+                            if tempy == terraintop + screeny && !skip {
                                 if terraintype == "FLAT" {
                                     MetaTile::Full
                                 } else if terraintype == "FLAT_BORDERL" {
@@ -753,22 +769,23 @@ pub mod tradhandle {
                                 } else {
                                     MetaTile::NoTile
                                 }
-                            } else if tempy > terraintop+screeny {
+                            } else if tempy > terraintop + screeny && terraintype != "PITS" || skip
+                            {
                                 MetaTile::Full
-                            }
-                            else {
+                            } else {
                                 MetaTile::NoTile
-                            };
-                            let o = mtt;
-
-                            xpos_metatile.push(tempx);
-                            ypos_metatile.push(tempy);
-
-                            let meta = MetaTile::from(o, vecheights[i].tile_id, tempx, tempy);
-                            for fa in 0..meta.len() {
-                                v.push(meta[fa]);
                             }
-                            
+                        } else {
+                            MetaTile::Full
+                        };
+                        let o = mtt;
+
+                        xpos_metatile.push(tempx);
+                        ypos_metatile.push(tempy);
+
+                        let meta = MetaTile::from(o, vecheights[i].tile_id, tempx, tempy);
+                        for fa in 0..meta.len() {
+                            v.push(meta[fa]);
                         }
                     }
                 }
@@ -1131,7 +1148,13 @@ pub mod tradhandle {
             let mut bossid;
             loop {
                 bossid = rand::thread_rng().gen_range(1..70);
-                if bossid != 9 && bossid != 0 && bossid != 1 && bossid != 36 && bossid <= 55 && bossid != 54 {
+                if bossid != 9
+                    && bossid != 0
+                    && bossid != 1
+                    && bossid != 36
+                    && bossid <= 55
+                    && bossid != 54
+                {
                     // disables yellow devil, boss doors, supressors, kamegoro gimmicks, and stuff you shouldnt see normally. also disables gemini man (HOPEFULLY)
                     break;
                 } else {
