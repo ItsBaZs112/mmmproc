@@ -312,7 +312,7 @@ pub mod tradhandle {
     fn handle_weapon(mut text: String) -> String {
         //weapon system
         //will force the mega buster onto slot zero since this IS a traditional lvl
-        text = format!("{}\"{}\"", format!("{}\n1k{}=", text, 0), 0);
+        text = format!("{}\n1k0=\"0\"", text);
         for i in 1..12 {
             //picks a random wpn id from versions 1.0 to 1.8.5.2, although older versions of the rng only supporterd 1.0 to 1.6.3
             let rand_num: u64 = rand::thread_rng().gen_range(1..105); //mega buster is removed from the weapon pool, unlike classic mode
