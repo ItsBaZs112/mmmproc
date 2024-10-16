@@ -14,7 +14,9 @@ pub mod tradhandle {
 
     use rand::{thread_rng, Rng};
     use std::fs::read_to_string;
-    use std::{fs, vec};
+    use std::io::Write;
+    use std::path::Path;
+    use std::{fs, io, vec};
 
     trait Convert {
         fn as_int(&self) -> u64;
@@ -29,6 +31,13 @@ pub mod tradhandle {
                 1
             }
         }
+    }
+
+    #[derive(Debug)]
+    struct PLC {
+        x: u64,
+        y: u64,
+        tile: MetaTile,
     }
 
     #[derive(Copy, Clone, Debug, PartialEq)]
@@ -508,6 +517,8 @@ pub mod tradhandle {
         let mut old_mtt = MetaTile::NoTile;
         let mut mtt_array: Vec<MetaTile> = Vec::new();
         let mut thev: Vec<MetaTile> = vec![MetaTile::NoTile];
+        let mut pitcount = 0;
+        let mut plc_array: Vec<PLC> = Vec::new();
         fn check_collider(
             arr: Vec<MetaTile>,
             selfi: MetaTile,
@@ -528,6 +539,7 @@ pub mod tradhandle {
         let mut terraintop = thread_rng().gen_range(4..7) * 32;
         let mut screeny = 0;
         let mut terraincount = 0;
+        let mut prevmtt = MetaTile::Full;
         for i in 0..vecheights.len() {
             if vecheights[i].xpos >= (level_length - 544) as u64
                 && vecheights[i].ypos % 224 == 0
@@ -585,207 +597,234 @@ pub mod tradhandle {
                             tile: true,
                         });
                     }
-                } else if bosschecky != 0 && vecheights[i].ypos < (bossentrance_y + bosschecky + 16)
-                    || vecheights[i].ypos > (bossentrance_y + bosschecky) + 64
-                {
+                } else {
                     if vecheights[i].xpos % 32 == 0 && vecheights[i].ypos % 32 == 0 {
-                        
+                        let mut mtt = MetaTile::NoTile;
                         let mut tempx = 0;
                         let mut tempy = 0;
                         let mut skip = false;
-                        for j2 in vecheights.iter() {
-                            if j2.xpos != u64::MAX && j2.ypos < vecheights[i].ypos && j2.ypos <= terraintop+screeny {
-                               skip = true;
-                               break
-                            }
-                       }
+
                         match terraintype {
                             "FLAT" => {
                                 terraincount += 1;
-                                if vecheights[i].ypos < terraintop + screeny {
+                                if vecheights[i].ypos < terraintop + screeny
+                                    || prevmtt == MetaTile::NoTile
+                                {
                                     tempx = u64::MAX;
                                 } else {
+                                    if vecheights[i].ypos >= terraintop + screeny + 32 {
+                                        skip = true;
+                                    }
                                     tempx = vecheights[i].xpos;
                                 }
                                 tempy = vecheights[i].ypos;
                                 if terraincount >= rand::thread_rng().gen_range(1..5) {
-                                    terraintype = choose(vec!["FLAT", "PITS", "PITS"]);
-    
-                                    terraintop = thread_rng().gen_range(4..7) * 32_u64;
+                                    let past = terraintop;
+                                    terraintop = thread_rng().gen_range(4..6) * 32_u64;
+                                    let mut op = vec!["FLAT", "PITS", "PITS", "FLAT_BORDERL"];
+                                    terraintype = choose(op);
+
                                     terraincount = 0;
+                                }
+                                if prevmtt == MetaTile::Full {
+                                    mtt = MetaTile::Full;
+                                } else {
+                                    mtt = choose(vec![MetaTile::LineBottom, MetaTile::Full]);
+                                }
+                            }
+                            "FLAT_TOPPER" => {
+                                terraincount += 1;
+                                if vecheights[i].ypos < terraintop + screeny
+                                    || prevmtt == MetaTile::NoTile
+                                {
+                                    tempx = u64::MAX;
+                                } else {
+                                    if vecheights[i].ypos >= terraintop + screeny + 32 {
+                                        skip = true;
+                                    }
+                                    tempx = vecheights[i].xpos;
+                                }
+                                tempy = vecheights[i].ypos;
+                                if terraincount >= rand::thread_rng().gen_range(1..5) {
+                                    let past = terraintop;
+                                    terraintop = thread_rng().gen_range(4..6) * 32_u64;
+                                    let mut op = vec!["FLAT", "FLAT_BORDERL"];
+                                    if tempy == screeny + 224 - 32 {
+                                        op.push("PITS");
+                                        op.push("PITS");
+                                    }
+
+                                    terraintype = choose(op);
+
+                                    terraincount = 0;
+                                }
+                                if prevmtt != MetaTile::NoTile {
+                                    mtt = MetaTile::LineTop;
+                                } else {
+                                    mtt = MetaTile::NoTile;
+                                }
+                            }
+                            "FLAT_BOTTOMER" => {
+                                terraincount += 1;
+                                if vecheights[i].ypos < terraintop + screeny
+                                    || prevmtt == MetaTile::NoTile
+                                {
+                                    tempx = u64::MAX;
+                                } else {
+                                    if vecheights[i].ypos >= terraintop + screeny + 32 {
+                                        skip = true;
+                                    }
+                                    tempx = vecheights[i].xpos;
+                                }
+                                tempy = vecheights[i].ypos;
+                                if terraincount >= rand::thread_rng().gen_range(1..5) {
+                                    let past = terraintop;
+                                    terraintop = thread_rng().gen_range(4..6) * 32_u64;
+                                    let mut op = vec!["FLAT", "PITS", "FLAT_BORDERL"];
+                                    if tempy == screeny + 224 - 32 {
+                                        op.push("PITS");
+                                        op.push("PITS");
+                                    }
+                                    terraintype = choose(op);
+
+                                    terraincount = 0;
+                                }
+                                if prevmtt != MetaTile::NoTile {
+                                    mtt = MetaTile::LineBottom;
+                                } else {
+                                    mtt = MetaTile::NoTile;
                                 }
                             }
                             "PITS" => {
-                                
+                                if pitcount < 1 {
+                                    if vecheights[i].ypos == screeny + 224 - 32 {
+                                        mtt = choose(vec![
+                                            MetaTile::NoTile,
+                                            MetaTile::NoTile,
+                                            MetaTile::NoTile,
+                                            MetaTile::LineRight,
+                                        ]);
+                                    } else {
+                                        mtt = MetaTile::Full
+                                    }
+                                } else {
+                                    mtt = MetaTile::Full;
+                                }
                                 tempy = vecheights[i].ypos;
-                                tempx = u64::MAX;
-    
-                                terraintype = choose(vec!["FLAT", "FLAT_BORDERL", "FLAT_BORDERR"]);
-                                terraintop = thread_rng().gen_range(4..7) * 32_u64;
+                                if mtt == MetaTile::NoTile || tempy < terraintop + screeny {
+                                    tempx = u64::MAX;
+                                } else {
+                                    tempx = vecheights[i].xpos;
+                                }
+
+                                let mut ops = vec!["FLAT"];
+                                terraintype = choose(ops);
+                                pitcount += 1;
                                 terraincount = 0;
                             }
                             "FLAT_BORDERL" => {
-                                if vecheights[i].ypos < terraintop + screeny {
+                                if vecheights[i].ypos < terraintop + screeny
+                                    || prevmtt == MetaTile::NoTile
+                                {
                                     tempx = u64::MAX;
+                                    if vecheights[i].ypos >= terraintop + screeny - 32 {
+                                        skip = true;
+                                    }
                                 } else {
                                     tempx = vecheights[i].xpos;
                                 }
                                 tempy = vecheights[i].ypos;
-    
-                                terraintype = choose(vec!["FLAT", "PITS"]);
-                                terraintop = thread_rng().gen_range(4..7) * 32_u64;
+                                let mut op = vec!["FLAT", "FLAT"];
+                                if tempy == screeny + 224 - 32 {
+                                    op.push("PITS");
+                                    op.push("PITS");
+                                }
+                                terraintype = choose(op);
                                 terraincount = 0;
+                                if prevmtt != MetaTile::NoTile {
+                                    mtt = MetaTile::LineLeft;
+                                } else {
+                                    mtt = MetaTile::NoTile;
+                                }
                             }
                             "FLAT_BORDERR" => {
-                                if vecheights[i].ypos < terraintop + screeny {
+                                if vecheights[i].ypos < terraintop + screeny
+                                    || prevmtt == MetaTile::NoTile
+                                {
                                     tempx = u64::MAX;
+                                    if vecheights[i].ypos >= terraintop + screeny + 32 {
+                                        skip = true;
+                                    }
                                 } else {
                                     tempx = vecheights[i].xpos;
                                 }
                                 tempy = vecheights[i].ypos;
-    
-                                terraintype = choose(vec!["FLAT", "PITS"]);
-                                terraintop = thread_rng().gen_range(4..7) * 32_u64;
+
+                                terraincount = 0;
+                                if prevmtt != MetaTile::NoTile {
+                                    mtt = MetaTile::LineRight;
+                                } else {
+                                    mtt = MetaTile::NoTile;
+                                }
+
+                                let past = terraintop;
+                                terraintop = thread_rng().gen_range(4..6) * 32_u64;
+                                let mut op = vec!["FLAT", "FLAT_BORDERL"];
+                                if tempy == screeny + 224 - 32 {
+                                    op.push("PITS");
+                                    op.push("PITS");
+                                }
+                                terraintype = choose(op);
+
                                 terraincount = 0;
                             }
-    
+
                             _ => {
                                 tempx = vecheights[i].xpos;
                                 tempx = vecheights[i].ypos;
                             }
                         }
+                        if skip {
+                            mtt = MetaTile::Full;
+                        }
+                        if terraintype != "PITS" {
+                            pitcount = 0;
+                        }
                         if tempx != u64::MAX {
-                            let mtt = if !skip {
-                                if tempy == terraintop + screeny && !skip {
-                                    if terraintype == "FLAT" {
-                                        MetaTile::Full
-                                    } else if terraintype == "FLAT_BORDERL" {
-                                        MetaTile::LineLeft
-                                    } else if terraintype == "FLAT_BORDERR" {
-                                        MetaTile::LineRight
-                                    } else {
-                                        MetaTile::NoTile
-                                    }
-                                } else if tempy > terraintop + screeny && terraintype != "PITS" || skip
-                                {
-                                    MetaTile::Full
-                                } else {
-                                    MetaTile::NoTile
-                                }
-                            } else {
-                                MetaTile::Full
-                            };
-                            let o = mtt;
-    
+                            let mut o = mtt;
+
                             xpos_metatile.push(tempx);
                             ypos_metatile.push(tempy);
-    
+
                             let meta = MetaTile::from(o, vecheights[i].tile_id, tempx, tempy);
                             for fa in 0..meta.len() {
                                 v.push(meta[fa]);
                             }
-                        }
-                    }
-                } else if ((bosschecky == 0 && vecheights[i].xpos < (level_length - 544) as u64)
-                    || (bosschecky != 0 && vecheights[i].xpos < (level_length - 544) as u64)
-                        && vecheights[i].ypos > (bossentrance_y + bosschecky + 16)
-                        && vecheights[i].ypos < (bossentrance_y + bosschecky) + 64)
-                    && vecheights[i].xpos % 32 == 0
-                    && vecheights[i].ypos % 32 == 0
-                {
-                    let mut tempx = 0;
-                    let mut tempy = 0;
-                    let mut skip = false;
-                    for j2 in vecheights.iter() {
-                        if j2.xpos != u64::MAX && j2.ypos < vecheights[i].ypos && j2.ypos <= terraintop+screeny {
-                           skip = true;
-                           break
-                        }
-                   }
-                    match terraintype {
-                        "FLAT" => {
-                            terraincount += 1;
-                            if vecheights[i].ypos < terraintop + screeny {
-                                tempx = u64::MAX;
-                            } else {
-                                tempx = vecheights[i].xpos;
-                            }
-                            tempy = vecheights[i].ypos;
-                            if terraincount >= rand::thread_rng().gen_range(1..5) {
-                                terraintype = choose(vec!["FLAT", "PITS", "PITS"]);
 
-                                terraintop = thread_rng().gen_range(4..7) * 32_u64;
-                                terraincount = 0;
-                            }
+                            prevmtt = mtt;
                         }
-                        "PITS" => {
-
-                            tempy = vecheights[i].ypos;
-                            tempx = u64::MAX;
-                           
-                            terraintype = choose(vec!["FLAT", "FLAT_BORDERL", "FLAT_BORDERR"]);
-                            terraintop = thread_rng().gen_range(4..7) * 32_u64;
-                            terraincount = 0;
-                        }
-                        "FLAT_BORDERL" => {
-                            if vecheights[i].ypos < terraintop + screeny {
-                                tempx = u64::MAX;
-                            } else {
-                                tempx = vecheights[i].xpos;
-                            }
-                            tempy = vecheights[i].ypos;
-
-                            terraintype = choose(vec!["FLAT", "PITS"]);
-                            terraintop = thread_rng().gen_range(4..7) * 32_u64;
-                            terraincount = 0;
-                        }
-                        "FLAT_BORDERR" => {
-                            if vecheights[i].ypos < terraintop + screeny {
-                                tempx = u64::MAX;
-                            } else {
-                                tempx = vecheights[i].xpos;
-                            }
-                            tempy = vecheights[i].ypos;
-
-                            terraintype = choose(vec!["FLAT", "PITS"]);
-                            terraintop = thread_rng().gen_range(4..7) * 32_u64;
-                            terraincount = 0;
-                        }
-
-                        _ => {
-                            tempx = vecheights[i].xpos;
-                            tempx = vecheights[i].ypos;
-                        }
-                    }
-                    if tempx != u64::MAX {
-                        let mtt = if !skip {
-                            if tempy == terraintop + screeny && !skip {
-                                if terraintype == "FLAT" {
-                                    MetaTile::Full
-                                } else if terraintype == "FLAT_BORDERL" {
-                                    MetaTile::LineLeft
-                                } else if terraintype == "FLAT_BORDERR" {
-                                    MetaTile::LineRight
-                                } else {
-                                    MetaTile::NoTile
+                        for jk in 0..v.len() {
+                            if mtt == MetaTile::NoTile {
+                                if v[jk].xpos == vecheights[i].xpos
+                                    || v[jk].xpos == vecheights[i].xpos + 16
+                                {
+                                    if v[jk].ypos > screeny && v[jk].ypos < screeny + 224 {
+                                        v[jk].enabled = false;
+                                    }
                                 }
-                            } else if tempy > terraintop + screeny && terraintype != "PITS" || skip
-                            {
-                                MetaTile::Full
-                            } else {
-                                MetaTile::NoTile
+                            } else if mtt == MetaTile::LineLeft {
+                                if v[jk].xpos == vecheights[i].xpos + 16 {
+                                    if v[jk].ypos > screeny && v[jk].ypos < screeny + 224 {
+                                        v[jk].enabled = false;
+                                    }
+                                }
+                            } else if mtt == MetaTile::LineRight {
+                                if v[jk].xpos == vecheights[i].xpos {
+                                    if v[jk].ypos > screeny && v[jk].ypos < screeny + 224 {
+                                        v[jk].enabled = false;
+                                    }
+                                }
                             }
-                        } else {
-                            MetaTile::Full
-                        };
-                        let o = mtt;
-
-                        xpos_metatile.push(tempx);
-                        ypos_metatile.push(tempy);
-
-                        let meta = MetaTile::from(o, vecheights[i].tile_id, tempx, tempy);
-                        for fa in 0..meta.len() {
-                            v.push(meta[fa]);
                         }
                     }
                 }
@@ -829,6 +868,7 @@ pub mod tradhandle {
             counter += 1;
             */
         }
+
         println!("{}", bosschecky);
         (v, bosschecky + bossentrance_y)
     }
@@ -937,17 +977,58 @@ pub mod tradhandle {
         text
     }
 
+    fn handle_megaman(mut text: String, levelheights: Vec<TileData>) -> (String, i64, i64) {
+        let xpos = (rand::thread_rng().gen_range(3..7) * 16) as u64;
+        let mut ypos = 0;
+        let mut can_proceed = true;
+
+        
+            for i in levelheights.iter() {
+                if i.xpos == xpos {
+                    if i.ypos < 224 {
+                        for j in levelheights.iter() {
+                            if j.ypos == i.ypos - 16 {
+                                break
+                            }
+                            else {
+
+                                ypos = i.ypos-16;
+                            }
+                        }
+                        
+                    }
+                }
+            }
+        
+        let playerid = 0;
+        println!("x and y is {},{}. player id is {}.", xpos, ypos, playerid);
+
+        text = format!(
+            "{}a{},{}=\"1\"\nb{},{}=\"-1\"\nc{},{}=\"1\"\nd{},{}=\"4\"\ne{},{}=\"{}\"\n",
+            text, xpos, ypos, xpos, ypos, xpos, ypos, xpos, ypos, xpos, ypos, playerid
+        ); //basic stuffs
+        text = format!(
+            "{}f{},{}=\"0\"\ng{},{}=\"0\"\nh{},{}=\"1\"\ni{},{}=\"0\"\n",
+            text, xpos, ypos, xpos, ypos, xpos, ypos, xpos, ypos
+        ); //other properties
+
+        (text, xpos.try_into().unwrap(), ypos as i64)
+    }
+
     pub fn file_write(batch: bool) {
         let mut batchloop = 10;
         if !batch {
             batchloop = 1;
         };
+        let mut transcount_real: Vec<u8> = Vec::new();
         for counts in 0..batchloop {
-            let bgcount = rand::thread_rng().gen_range(0..856);
+            let bgcount = rand::thread_rng().gen_range(0..864);
 
             let length: i64 = (rand::thread_rng().gen_range(9..23)) * 256;
             //screen trans
             let mut transpoints = Vec::new();
+            let transcount = rand::thread_rng().gen_range(0..3);
+            transcount_real.push(transcount);
 
             for c in 0..length / 256 {
                 let transition = rand::thread_rng().gen_bool(1.0 / 3.0);
@@ -964,11 +1045,21 @@ pub mod tradhandle {
             let fortress = rand::thread_rng().gen_bool(1.0 / 4.5);
 
             fn read_lines(filename: &str) -> Vec<String> {
-                read_to_string(filename)
-                    .unwrap() // panic on possible file-reading errors
-                    .lines() // split the string into an iterator of string slices
-                    .map(String::from) // make each slice into a string
-                    .collect() // gather them together into a vector
+                if Path::new("names.txt").exists() {
+                    read_to_string(filename)
+                        .unwrap() // panic on possible file-reading errors
+                        .lines() // split the string into an iterator of string slices
+                        .map(String::from) // make each slice into a string
+                        .collect() // gather them together into a vector
+                } else {
+                    vec![
+                        "ERROR".to_string(),
+                        "NO NAMES FOUND".to_string(),
+                        "ERROR".to_string(),
+                        "SYSTEM ERROR".to_string(),
+                        "PLEASE GET NAMES".to_string(),
+                    ]
+                }
             }
 
             let names = read_lines("names.txt");
@@ -1028,6 +1119,7 @@ pub mod tradhandle {
             contents = binding;
 
             //activate sections and add backgrounds
+            let lkm = 0;
             for i in -1..length / 256 {
                 if pointchecker < transpoints.len() && i - 1 == transpoints[pointchecker] / 256 {
                     if i != -1 {
@@ -1116,6 +1208,10 @@ pub mod tradhandle {
                 vecheights[i] = TileData::autotile_prep(&vecheights[i].clone(), &vecheights);
             }
             */
+
+            let binding = handle_megaman(contents, vecheights.clone()).0;
+            contents = binding.clone();
+
             for i in 0..vecheights.len() {
                 contents = format!(
                     "{}a{},{}=\"{}\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"{}\"\nk{},{}=\"{}\"\n",
@@ -1163,11 +1259,15 @@ pub mod tradhandle {
             }
             let binding = handle_boss(contents.clone(), bossid, length, screeny, rule);
             contents = binding;
+            let work = std::env::current_dir().unwrap();
+            let level_filename = work.join("level.mmlv");
+            println!("uploading level to: {}", work.display());
 
-            //write all data to the mmlv file.
-            fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv");
+            fs::write(&level_filename, contents.clone()).expect("failed to write mmlv");
+
             if batch {
-                fs::rename("level.mmlv", format!("level{}.mmlv", counts + 1));
+                let new_filename = work.join(format!("level{}.mmlv", counts + 1));
+                fs::rename(&level_filename, &new_filename).expect("failed to rename the file");
             }
         }
     }
