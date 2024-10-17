@@ -1,54 +1,62 @@
-0v: Version of the game the level is made in.
-1a: Name of the level.
-4a: Author's name.
-1b: Slide move availability (for Mega Man).
-1c: Charge shot availability (for Mega Man).
-1ba: Double damage for Protoman.
-1ca: Infinite charge shots for Protoman.
-1bb: Double jump for Bass.
-1d: Charge shot type (for Mega Man).
-1e: Background color ID.
-1f: Level mugshot ID.
-1bc: Number of bosses.
+0v: Version of the game the level is made in
+1a: Name of the level
+4a: Author's name
+1b: Slide move availability
+1c: Charge shot availability
+1ba: Double damage
+1ca: Proto Strike
+1bb: Double jump
+1d: Charge shot type
+1e: Background color ID
+1f: Level mugshot ID
+1bc: Number of bosses
 
 Boss Configuration:
+(X is the global boss id. boss ID 0 refers to the first boss, etc. minimum IIRC is 199. When editing, replace X with the proper number)
 
-1xcX: X position of boss X.
-1ycX: Y position of boss X.
-1gaX: Primary weakness enabled for boss X.
-1gX: Primary weakness weapon slot for boss X.
-1haX: Secondary weakness enabled for boss X.
-1hX: Secondary weakness weapon slot for boss X.
-1iX: Immunity enabled for boss X.
-1jX: Weapon slot for immunity of boss X.
-1nX: Boss music ID for boss X.
-1oX: Boss music type for boss X.
+1xcX: X position of boss X
+1ycX: Y position of boss X
+1gaX: Primary weakness enabled for boss X
+1gX: Primary weakness weapon slot for boss X
+1haX: Secondary weakness enabled for boss X
+1hX: Secondary weakness weapon slot for boss X
+1iX: Immunity enabled for boss X
+1jX: Weapon slot for immunity of boss X
+1nX: Boss music ID for boss X
+1oX: Boss music type for boss X
+
+
 Weapons Configuration:
 
 1kX: Weapon ID for slot X (up to 12 slots).
-Music and Level Properties:
 
-1l: Song ID.
-1m: Song category.
-1p: Min level width (multiples of 256).
-1q: Max level width (multiples of 256).
-1r: Min level height (multiples of 224).
-1s: Max level height (multiples of 224).
-Sections Definition:
 
-2a: Coordinates of the section (X, X2).
+Music and Level Size:
+
+1l: Song ID
+1m: Song category
+1p: Min level width (multiples of 256) Recommended to be 0
+1q: Max level width (multiples of 256)
+1r: Min level height (multiples of 224) Recommended to be 0
+1s: Max level height (multiples of 224)
+
+
+Sections:
+
+2a: Coordinates of the section (X, X2)
+
 Objects, Tiles, and Placements:
 
 aX,Y: Object placement at (X, Y).
-bX,Y: X scale of object.
-cX,Y: Y scale of object.
-dX,Y: Category of the asset.
-eX,Y: ID of the asset in that category.
-fX,Y: Color of object.
-gX,Y: Angle of object.
-hX,Y: Coverage setting (1 for full coverage).
-iX,Y: Is the object a tile?
-jX,Y: Tileset setting.
-kX,Y: Additional settings.
-lX,Y: Spike tile sprite index.
-mX,Y, nX,Y, oX,Y: Miscellaneous settings for objects.
+bX,Y: X scale of object. (default is 1 for facing right, -1 for left, any other value makes the obj look weird when spawning)
+cX,Y: Y scale of object. PLEASE KEEP AT 1 UNLESS THE OBJECT DOESNT FLIP Y SCALE (ceiling shademan crows!!)
+dX,Y: Asset category
+eX,Y: Asset ID, don't use this for tiles
+fX,Y: Color
+gX,Y: Angle (in degrees of 90)
+hX,Y: ?
+iX,Y: Is the object a tile? use 1 for true, 0 for false
+jX,Y: Tileset ID
+kX,Y: ??????????
+lX,Y: ??????????
+mX,Y, nX,Y, oX,Y: ???????????
