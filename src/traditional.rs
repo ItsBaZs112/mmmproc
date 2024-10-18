@@ -544,12 +544,12 @@ pub mod tradhandle {
         //specil traditional settings
         //be right bork!
 
-        let mut has_hole = false;
-        let mut has_hole_position = thread_rng().gen_range(4..14) * 16;
+        let mut has_hole = true;
+        let mut has_hole_position = 512 + thread_rng().gen_range(4..14) * 16;
         let mut ceilingtype = choose(vec![0, 1]);
         let mut ceiling_index = 1;
         let mut ceiling_y = 0;
-        let mut hole_width = 0;
+        let mut hole_width = 64;
         //back to the show
         for i in 0..vecheights.len() {
             if vecheights[i].xpos >= (level_length - 544) as u64
@@ -807,19 +807,34 @@ pub mod tradhandle {
                                     tempx = vecheights[i].ypos;
                                 }
                             }
-                        }
-                        else {
-                            if vecheights[i].ypos == ceiling_y {
-                                match ceilingtype {
-                                    0 => {
-                                        mtt = MetaTile::Full;
+                        } else {
+                            if vecheights[i].xpos % 512 == 0 {
+                                has_hole_position = vecheights[i].xpos;
+                            }
+                            let in_hole = {
+                                if vecheights[i].xpos >= has_hole_position
+                                    && vecheights[i].xpos <= has_hole_position + hole_width
+                                {
+                                    true
+                                } else {
+                                    false
+                                }
+                            };
+                            if vecheights[i].ypos == ceiling_y && ceiling_y != 0 {
+                                if !in_hole || has_hole == false {
+                                    tempx = vecheights[i].xpos;
+                                    tempy = vecheights[i].ypos;
+                                    mtt = MetaTile::Full;
+                                } else if in_hole {
+                                    for jk in v.iter_mut() {
+                                        if jk.enabled == true && jk.xpos == vecheights[i].xpos {
+                                            if jk.ypos < ceiling_y && jk.ypos > ceiling_y - 224 {
+                                                jk.enabled = false;
+                                                jk.ypos = 4480-32;
+                                            }
+                                        }
                                     }
-                                    1 => {
-                                        mtt = MetaTile::LineTop;
-                                    }
-                                    _ => {
-                                        mtt = MetaTile::NoTile;
-                                    }
+                                    tempx = u64::MAX;
                                 }
                             }
                         }
@@ -842,25 +857,29 @@ pub mod tradhandle {
 
                             prevmtt = mtt;
                         }
+
                         for jk in 0..v.len() {
                             if mtt == MetaTile::NoTile {
                                 if v[jk].xpos == vecheights[i].xpos
                                     || v[jk].xpos == vecheights[i].xpos + 16
                                 {
-                                    if v[jk].ypos > screeny && v[jk].ypos < screeny + 224 {
+                                    if v[jk].ypos > screeny + 32 && v[jk].ypos < screeny + 224 {
                                         v[jk].enabled = false;
+                                        v[jk].ypos = 4480-32;
                                     }
                                 }
                             } else if mtt == MetaTile::LineLeft {
                                 if v[jk].xpos == vecheights[i].xpos + 16 {
-                                    if v[jk].ypos > screeny && v[jk].ypos < screeny + 224 {
+                                    if v[jk].ypos > screeny + 32 && v[jk].ypos < screeny + 224 {
                                         v[jk].enabled = false;
+                                        v[jk].ypos = 4480-32;
                                     }
                                 }
                             } else if mtt == MetaTile::LineRight {
                                 if v[jk].xpos == vecheights[i].xpos {
-                                    if v[jk].ypos > screeny && v[jk].ypos < screeny + 224 {
+                                    if v[jk].ypos > screeny + 32 && v[jk].ypos < screeny + 224 {
                                         v[jk].enabled = false;
+                                        v[jk].ypos = 4480-32;
                                     }
                                 }
                             }
@@ -1026,7 +1045,7 @@ pub mod tradhandle {
 
             for i in levelheights.iter() {
                 if i.xpos == xpos && i.ypos < 224 && i.enabled {
-                    if i.ypos < highest_ypos {
+                    if i.ypos < highest_ypos && i.ypos > 48 {
                         highest_ypos = i.ypos;
                     }
                 }
