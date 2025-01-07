@@ -1,7 +1,10 @@
 use std::io::{self};
 
 mod classic;
+//mod traditional;
+mod traditional_old;
 mod traditional;
+mod plot;
 fn main() {
     let phase = 0;
     if phase == 0 {
@@ -15,10 +18,13 @@ fn main() {
                 classic::handle::file_write();
                 break;
             } else if input == "traditional" {
-                traditional::tradhandle::file_write(false);
+                traditional::tradhandle::file_write();
                 break;
             } else if input == "batch" {
-                traditional::tradhandle::file_write(true);
+                traditional::tradhandle::file_write();
+                break;
+            } else if input == "plot" {
+                plot::print();
                 break;
             } else {
                 println!("Please enter either \"classic\", \"batch\" or \"traditional\".");
