@@ -62,7 +62,7 @@ pub mod tradhandle {
                 }
             }
         }
-
+       
         (text, vec_height)
     }
 
@@ -250,16 +250,32 @@ pub mod tradhandle {
             }
         }
 
+       
         let names = read_lines("names.txt");
         let mut name = String::new();
-        for _ in 0..rand::thread_rng().gen_range(2..7) {
+
+        if thread_rng().gen_bool(1.0/10.0) {
             name = format!(
-                "{}{} ",
-                name,
-                names[rand::thread_rng().gen_range(1..names.len() - 1)]
+                "Mega Man {} - {}s Fortress Stage {}",
+                names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                thread_rng().gen_range(0..70) //picks a random number from 1 to 69. not 70, that's unfunny.
+            );
+        } else {
+            let female = rand::thread_rng().gen_bool(1.0 / 4.0); //gender decider
+            let mut fstring = String::from("Man");
+            if female {
+                fstring = String::from("Woman");
+            }
+
+            name = format!(
+                "Mega Man {} - {} {}s Stage",
+                names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                names[rand::thread_rng().gen_range(1..names.len() - 1)],
+                fstring
             );
         }
-
+        
         //init
         let mut contents = String::from("[Level]");
         //weapons
