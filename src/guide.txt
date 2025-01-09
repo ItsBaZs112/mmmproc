@@ -51,12 +51,12 @@ aX,Y: Object placement at (X, Y).
 bX,Y: X scale of object. (default is 1 for facing right, -1 for left, any other value makes the obj look weird when spawning)
 cX,Y: Y scale of object. PLEASE KEEP AT 1 UNLESS THE OBJECT DOESNT FLIP Y SCALE (ceiling shademan crows!!)
 dX,Y: Asset category
-eX,Y: Asset ID, don't use this for tiles
+eX,Y: Asset ID,
 fX,Y: Color
 gX,Y: Angle (in degrees of 90)
 hX,Y: ?
 iX,Y: Is the object a tile? use 1 for true, 0 for false
-jX,Y: Tileset ID
-kX,Y: ??????????
+jX,Y: Tileset offset (for autotiling)
+kX,Y: Tileset offset (for autotiling)
 lX,Y: ??????????
 mX,Y, nX,Y, oX,Y: ???????????

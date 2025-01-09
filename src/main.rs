@@ -2,9 +2,9 @@ use std::io::{self};
 
 mod classic;
 //mod traditional;
-mod traditional_old;
-mod traditional;
 mod plot;
+mod traditional;
+mod traditional_old;
 fn main() {
     let phase = 0;
     if phase == 0 {

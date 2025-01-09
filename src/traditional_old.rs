@@ -808,7 +808,7 @@ pub mod tradhandle {
                                 }
                             }
                         } else {
-                            if vecheights[i].xpos % (256*3) == 0 {
+                            if vecheights[i].xpos % (256 * 3) == 0 {
                                 has_hole_position = vecheights[i].xpos;
                             }
                             let in_hole = {
@@ -830,7 +830,7 @@ pub mod tradhandle {
                                         if jk.enabled == true && jk.xpos == vecheights[i].xpos {
                                             if jk.ypos < ceiling_y && jk.ypos > ceiling_y - 224 {
                                                 jk.enabled = false;
-                                                jk.ypos = 4480-32;
+                                                jk.ypos = 4480 - 32;
                                             }
                                         }
                                     }
@@ -865,21 +865,21 @@ pub mod tradhandle {
                                 {
                                     if v[jk].ypos > screeny + 32 && v[jk].ypos < screeny + 224 {
                                         v[jk].enabled = false;
-                                        v[jk].ypos = 4480-32;
+                                        v[jk].ypos = 4480 - 32;
                                     }
                                 }
                             } else if mtt == MetaTile::LineLeft {
                                 if v[jk].xpos == vecheights[i].xpos + 16 {
                                     if v[jk].ypos > screeny + 32 && v[jk].ypos < screeny + 224 {
                                         v[jk].enabled = false;
-                                        v[jk].ypos = 4480-32;
+                                        v[jk].ypos = 4480 - 32;
                                     }
                                 }
                             } else if mtt == MetaTile::LineRight {
                                 if v[jk].xpos == vecheights[i].xpos {
                                     if v[jk].ypos > screeny + 32 && v[jk].ypos < screeny + 224 {
                                         v[jk].enabled = false;
-                                        v[jk].ypos = 4480-32;
+                                        v[jk].ypos = 4480 - 32;
                                     }
                                 }
                             }

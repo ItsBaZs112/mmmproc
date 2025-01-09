@@ -1,8 +1,8 @@
 pub mod handle {
     use rand::Rng;
+    use std::fs;
     use std::fs::read_to_string;
     use std::path::Path;
-    use std::fs;
     fn handle_weapon(mut text: String) -> String {
         //weapon system
         //will force a weapon onto slot zero because 90% of the levels i generated didnt have the player have a default wpn
@@ -52,15 +52,28 @@ pub mod handle {
         let mut vecheighttrack = 0;
         let mut height = rand::thread_rng().gen_range(1..13);
         for i in 0..level_length / 16 {
-            if pointchecker < verttiles.len() && i - 1 == verttiles[pointchecker] / 16 && i * 256 != level_length {
+            if pointchecker < verttiles.len()
+                && i - 1 == verttiles[pointchecker] / 16
+                && i * 256 != level_length
+            {
                 for j in 1..height {
                     vecheight.push(height);
                     vecheighttrack += 1;
                     text = format!(
-                            "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                            text, i-16, (screeny)+224 - j * 16, i-16, (screeny)+224 - j * 16, tile_id,
-                            i-16, (screeny)+224 - j * 16, i-16, (screeny)+224 - j * 16, i-16, (screeny)+224 - j * 16
-                        );
+                        "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
+                        text,
+                        i - 16,
+                        (screeny) + 224 - j * 16,
+                        i - 16,
+                        (screeny) + 224 - j * 16,
+                        tile_id,
+                        i - 16,
+                        (screeny) + 224 - j * 16,
+                        i - 16,
+                        (screeny) + 224 - j * 16,
+                        i - 16,
+                        (screeny) + 224 - j * 16
+                    );
                 }
                 screeny += 224;
                 pointchecker += 1;
@@ -137,11 +150,13 @@ pub mod handle {
         verttiles: Vec<i64>,
     ) -> String {
         let count = rand::thread_rng().gen_range(0..lvllength / 32);
-        let objectids = [rand::thread_rng().gen_range(0..237),
+        let objectids = [
             rand::thread_rng().gen_range(0..237),
             rand::thread_rng().gen_range(0..237),
             rand::thread_rng().gen_range(0..237),
-            rand::thread_rng().gen_range(0..237)];
+            rand::thread_rng().gen_range(0..237),
+            rand::thread_rng().gen_range(0..237),
+        ];
         #[allow(unused_assignments)]
         let mut screeny = 0;
         println!("enemy count: {}", count);
@@ -354,7 +369,7 @@ pub mod handle {
         //general things
         let mugshot = rand::thread_rng().gen_range(1..41); //boss mugshot id
         contents = format!("{}\n0v=\"1.9.0\"\n1a=\"{}\"\n4a=\"MMMRNG\"\n4b=\"{}\"\n0a=\"000000\"\n1p=\"0\"\n1q=\"{}\"\n1r=\"0\"\n1s=\"4480\"\n1bc=\"1\"\n1f=\"{}\"\n1e=\"{}\"\n", contents,name,rand::thread_rng().gen_range(0..161),length,mugshot,rand::thread_rng().gen_range(0..51)); //adds general level info
-                                                                                                                                                                                                                                                                                            //musica
+                                                                                                                                                                                                                                                                                          //musica
         let binding = handle_music(contents.clone());
         contents = binding;
         //player abilities
@@ -384,8 +399,7 @@ pub mod handle {
                     contents = format!("{}2a{},{}=\"1\"\n", contents, (i) * 256, screeny);
                     //add bg
 
-                    contents =
-                        format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
+                    contents = format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
                     println!("{screeny}");
                 }
             }

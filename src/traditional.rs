@@ -5,58 +5,76 @@ pub mod tradhandle {
     use std::path::Path;
 
     fn repeat<F: FnMut()>(mut f: F, times: u64) {
-        for i in 0..times {
+        for _ in 0..times {
             f()
         }
     }
 
+    fn rows_generate() -> Vec<bool> {
+        let mut rows = Vec::new();
+        repeat(
+            || {
+                rows.push(thread_rng().gen_bool(7.0 / 10.0));
+            },
+            15,
+        );
+        rows
+    }
 
     fn handle_tiling(
         mut text: String,
         level_length: i64,
         verttiles: Vec<i64>,
     ) -> (String, Vec<i64>) {
-        //adds tiles
         let mut pointchecker = 0;
-        let mut screeny = 0;
-        let tile_id: u64 = rand::thread_rng().gen_range(0..1315);
-        let vecheight = Vec::new();
-        #[allow(unused_assignments)]
-        let can_proceed = true;
-        let mut j = 0;
-        for i in 1..level_length / 16 + 1 {
-            if pointchecker < verttiles.len() && i == verttiles[pointchecker] / 16 && i * 16 < level_length {
-                j = 0;
+        let mut screen_y = 0;
+        let mut vec_height: Vec<i64> = Vec::new();
+        let mut r = rows_generate();
+        for i in 0..(level_length / 16) {
+            if pointchecker < verttiles.len() && i * 16 >= verttiles[pointchecker] {
+                vec_height.push(screen_y);
                
-                
-                
-                screeny += 224;
-                pointchecker += 1;
-
-                println!("{screeny}");
-            }
-            
-
-            if can_proceed {
-                j = 0;
-                repeat(|| {
-                    if (i * 16) - 16 >= 0 {
-                        text = format!(
-                            "{}a{},{}=\"1\"\ne{},{}=\"{}\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                            text, (i*16), (screeny)+224 - (j * 16)- 16, (i*16), (screeny)+224 - (j * 16)- 16, thread_rng().gen_range(0..2),
-                            (i*16), (screeny)+224 - (j * 16)- 16, (i*16), (screeny)+224 - (j * 16)- 16, (i*16), (screeny)+224 - (j * 16)- 16
-                        );
-                     
+                for k in 0..16 {
+                    for j in 0..14 {
+                        if r[j] {
+                            let x = i * 16 + (k * 16);
+                            let y = screen_y + (j * 16) as i64;
+                            println!("x: {}, y: {}, tileset index: 1", x, y);
+                            text.push_str(&format!(
+                                "a{},{}=\"1\"\ne{},{}=\"1\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
+                                x, y, x, y, x, y, x, y, x, y,
+                            ));
                         }
-                        j += 1;
-                   }, 14);
-                    
+                    }
+                }
+                screen_y += 224;
+                pointchecker += 1;
+            }
+            for j in 0..14 {
+                if r[j] {
+                    let x = i * 16;
+                    let y = screen_y + (j * 16) as i64;
+                    println!("x: {}, y: {}, tileset index: 1", x, y);
+                    text.push_str(&format!(
+                        "a{},{}=\"1\"\ne{},{}=\"1\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
+                        x, y, x, y, x, y, x, y, x, y,
+                    ));
+                }
             }
         }
 
-        (text, vecheight)
+        (text, vec_height)
     }
 
+    trait FloorTo: Sized {
+        fn floor_to(&self, num: i64) -> i64;
+    }
+
+    impl FloorTo for i64 {
+        fn floor_to(&self, num: i64) -> i64 {
+            self - (self % num)
+        }
+    }
     trait Convert {
         fn as_int(&self) -> u64;
     }
@@ -200,11 +218,12 @@ pub mod tradhandle {
 
     pub fn file_write() {
         let bgcount = rand::thread_rng().gen_range(0..732);
-        let length: i64 = rand::thread_rng().gen_range(1..50) * 256;
+        let length: i64 = rand::thread_rng().gen_range(17..31) * 256;
+        
         //screen trans
         let mut transpoints = Vec::new();
         for c in 0..length / 256 {
-            let transition = rand::thread_rng().gen_bool(1.0 / 4.0);
+            let transition = rand::thread_rng().gen_bool(1.0 / 6.9);
             if transition && c * 256 != length - 256 {
                 transpoints.push(c * 256);
             }
@@ -256,7 +275,7 @@ pub mod tradhandle {
         let binding = handle_abilities(contents.clone());
         contents = binding;
 
-        //activate sections and add backgrounds
+        //activate sections and backgrounds
         for i in -1..length / 256 {
             if pointchecker < transpoints.len() && i - 1 == transpoints[pointchecker] / 256 {
                 if i != -1 {
@@ -279,8 +298,7 @@ pub mod tradhandle {
                     contents = format!("{}2a{},{}=\"1\"\n", contents, (i) * 256, screeny);
                     //add bg
 
-                    contents =
-                        format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
+                    contents = format!("{}2d{},{}=\"{}\"\n", contents, i * 256, screeny, bgcount);
                     println!("{screeny}");
                 }
             }
@@ -297,7 +315,7 @@ pub mod tradhandle {
         contents = binding.0;
         let vecheights: Vec<i64> = binding.1;
         let objpoints = transpoints.clone();
-        
+
         //oh and object placements
         //let binding = handle_megaman(contents.clone(), vecheights.clone());
         //contents = binding.0;
@@ -335,8 +353,8 @@ pub mod tradhandle {
                 continue;
             }
         }
-        let binding = handle_boss(contents.clone(), bossid, length, screeny);
-        contents = binding;
+        //let binding = handle_boss(contents.clone(), bossid, length, screeny);
+        //contents = binding;
 
         fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv");
         //write all data to the mmlv file.
