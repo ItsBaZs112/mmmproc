@@ -4,21 +4,86 @@ pub mod tradhandle {
     use std::fs::read_to_string;
     use std::path::Path;
 
-    fn repeat<F: FnMut()>(mut f: F, times: u64) {
-        for _ in 0..times {
-            f()
-        }
+    #[derive(Clone, Debug)]
+    struct Chunk {
+        c: Vec<Vec<bool>>,
+        offset_x: u64,
+        offset_y: u64,
     }
 
-    fn rows_generate() -> Vec<bool> {
-        let mut rows = Vec::new();
-        repeat(
-            || {
-                rows.push(thread_rng().gen_bool(7.0 / 10.0));
-            },
-            15,
-        );
-        rows
+    impl Chunk {
+        fn new(offset_x: u64, offset_y: u64, past_chunk: Chunk, vert: bool) -> Self {
+            //past: previous chunk
+            //vert: was the last chunk a downward screen trans chunk?
+
+            let mut rng = rand::thread_rng();
+            let width = 16;
+            let height = 14;
+
+            let mut c = Vec::with_capacity(height);
+            let mut points: Vec<u8> = Vec::new();
+            for f in 0..16 {
+                let choose = rng.gen_bool(1.0 / 2.0);
+                if choose {
+                    points.push(f as u8);
+                }
+            }
+
+            let mut points_width: Vec<u8> = Vec::with_capacity(points.len());
+            for _ in 0..points.len() {
+                points_width.push(rng.gen_range(2..5));
+            }
+
+            let mut grab = vec![false; width];
+            for i in 0..points.len() {
+                let point = points[i] as usize;
+                let width = points_width[i] as usize;
+                for j in 0..width {
+                    if point + j < grab.len() {
+                        grab[point + j] = true;
+                    }
+                }
+            }
+            let platform_height = 6 + rng.gen_range(0..3);
+            for h in 0..height {
+                let mut row = Vec::with_capacity(width);
+                for w in 0..width {
+                    if grab[w] && h >= platform_height as usize {
+                        row.push(true);
+                    } else {
+                        row.push(false);
+                    }
+                }
+                c.push(row);
+            }
+
+            Chunk {
+                c,
+                offset_x,
+                offset_y,
+            }
+        }
+
+        fn to_text(&self) -> String {
+            let mut finally = String::new();
+            for f in 0..self.c.len() {
+                for e in 0..self.c[f].len() {
+                    if self.c[f][e] {
+                        //push a tiledata string if there's a tiel at this point
+                        let j = f * 16;
+                        let i = e * 16; //i and j are the x and y coordinates of the tile
+                        let id = 0;
+                        let xstart = self.offset_x as usize;
+                        let ystart = self.offset_y as usize;
+                        let formatter = format!("a{},{}=\"1\"\ne{},{}=\"1\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",xstart+i,ystart+j,xstart+i,ystart+j,xstart+i,ystart+j,xstart+i,ystart+j,xstart+i,ystart+j);
+                        // i havent implemented the checker to see EXACTLY where everything goes so im using 0
+                        finally.push_str(formatter.as_str());
+                    }
+                }
+            }
+            let f = finally.clone();
+            f
+        }
     }
 
     fn handle_tiling(
@@ -27,42 +92,41 @@ pub mod tradhandle {
         verttiles: Vec<i64>,
     ) -> (String, Vec<i64>) {
         let mut pointchecker = 0;
-        let mut screen_y = 0;
+        let mut screen_y: i64 = 0;
         let mut vec_height: Vec<i64> = Vec::new();
-        let mut r = rows_generate();
-        for i in 0..(level_length / 16) {
-            if pointchecker < verttiles.len() && i * 16 >= verttiles[pointchecker] {
-                vec_height.push(screen_y);
-               
-                for k in 0..16 {
-                    for j in 0..14 {
-                        if r[j] {
-                            let x = i * 16 + (k * 16);
-                            let y = screen_y + (j * 16) as i64;
-                            println!("x: {}, y: {}, tileset index: 1", x, y);
-                            text.push_str(&format!(
-                                "a{},{}=\"1\"\ne{},{}=\"1\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                                x, y, x, y, x, y, x, y, x, y,
-                            ));
-                        }
-                    }
-                }
+        let mut falsechunk = Chunk::new(
+            0,
+            0,
+            Chunk {
+                c: vec![vec![false; 16]; 14],
+                offset_x: 0,
+                offset_y: 0,
+            },
+            false,
+        );
+        let mut r = Chunk::new(0, 0, falsechunk, false);
+        let mut past = r.clone();
+        for i in 0..((level_length - 1) / 256) {
+            println!("{}", i);
+            past = r.clone();
+            r = Chunk::new((i * 256) as u64, screen_y as u64, past, false);
+
+            if pointchecker < verttiles.len() && ((i) * 256) == verttiles[pointchecker] {
+                past = r.clone();
+                let r2 = Chunk::new(((i) * 256) as u64, screen_y as u64, past.clone(), true);
+                text.push_str(format!("\n{}", r2.to_text().as_str()).as_str());
                 screen_y += 224;
+                vec_height.push(screen_y);
+                
+                r = Chunk::new(((i) * 256) as u64, screen_y as u64, past.clone(), true);
+                let past_c = past.clone();
+                println!("{} {} {screen_y}", r.offset_x, past_c.offset_x);
+                text.push_str(format!("\n{}", r.to_text().as_str()).as_str());
                 pointchecker += 1;
             }
-            for j in 0..14 {
-                if r[j] {
-                    let x = i * 16;
-                    let y = screen_y + (j * 16) as i64;
-                    println!("x: {}, y: {}, tileset index: 1", x, y);
-                    text.push_str(&format!(
-                        "a{},{}=\"1\"\ne{},{}=\"1\"\ni{},{}=\"1\"\nj{},{}=\"1\"\nk{},{}=\"1\"\n",
-                        x, y, x, y, x, y, x, y, x, y,
-                    ));
-                }
-            }
+            text.push_str(r.to_text().as_str());
         }
-       
+
         (text, vec_height)
     }
 
@@ -190,6 +254,7 @@ pub mod tradhandle {
         } else {
             can_charge = 1;
         }
+        //gravitycheckground()
         let charge_rng = rand::thread_rng().gen_range(4..7); //what charge shot will megaman use? 8/22: fixed the rng, now mm6 charge shots can be used
         let slide_rng = rand::thread_rng().gen_bool(9.0 / 10.0).as_int(); //can megaman slide? 8/22: updated rng
         text = format!(
@@ -219,7 +284,7 @@ pub mod tradhandle {
     pub fn file_write() {
         let bgcount = rand::thread_rng().gen_range(0..732);
         let length: i64 = rand::thread_rng().gen_range(17..31) * 256;
-        
+
         //screen trans
         let mut transpoints = Vec::new();
         for c in 0..length / 256 {
@@ -250,32 +315,16 @@ pub mod tradhandle {
             }
         }
 
-       
         let names = read_lines("names.txt");
         let mut name = String::new();
-
-        if thread_rng().gen_bool(1.0/10.0) {
+        for _ in 0..rand::thread_rng().gen_range(2..7) {
             name = format!(
-                "Mega Man {} - {}s Fortress Stage {}",
-                names[rand::thread_rng().gen_range(1..names.len() - 1)],
-                names[rand::thread_rng().gen_range(1..names.len() - 1)],
-                thread_rng().gen_range(0..70) //picks a random number from 1 to 69. not 70, that's unfunny.
-            );
-        } else {
-            let female = rand::thread_rng().gen_bool(1.0 / 4.0); //gender decider
-            let mut fstring = String::from("Man");
-            if female {
-                fstring = String::from("Woman");
-            }
-
-            name = format!(
-                "Mega Man {} - {} {}s Stage",
-                names[rand::thread_rng().gen_range(1..names.len() - 1)],
-                names[rand::thread_rng().gen_range(1..names.len() - 1)],
-                fstring
+                "{}{} ",
+                name,
+                names[rand::thread_rng().gen_range(1..names.len() - 1)]
             );
         }
-        
+
         //init
         let mut contents = String::from("[Level]");
         //weapons
@@ -369,8 +418,8 @@ pub mod tradhandle {
                 continue;
             }
         }
-        //let binding = handle_boss(contents.clone(), bossid, length, screeny);
-        //contents = binding;
+        let binding = handle_boss(contents.clone(), bossid, length, screeny);
+        contents = binding;
 
         fs::write("level.mmlv", contents.clone()).expect("failed to write mmlv");
         //write all data to the mmlv file.
